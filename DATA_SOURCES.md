@@ -30,7 +30,11 @@
 
 ## 动力学
 
-默认采用 **EGM2008 120 阶/次静态重力场 + 地球匀速自转 + 经验加速度**。
+**当前默认 `--gravity precise`：** Orekit、EGM2008 150 阶/次、DE405、固体潮/极潮、EOT11a 海潮、DTM2000 阻力、宏观太阳辐射压、相对论以及精密 GCRF/ITRF 转换。数据来源、参数、简化项和空间天气可用性逐项列在 [DYNAMICS.md](DYNAMICS.md)，所有辅助文件哈希在 [data/forces/manifest.json](data/forces/manifest.json)。
+
+以下保留旧版 `--gravity egm2008` 的说明，便于复现实验升级前的结果。
+
+旧版采用 **EGM2008 120 阶/次静态重力场 + 地球匀速自转 + 经验加速度**。
 EGM2008 原始文献：[Pavlis 等，2012](https://doi.org/10.1029/2011JB008916)。
 附带系数来自 [Brahe 固定提交的 EGM2008_120.gfc](https://github.com/duncaneddy/brahe/blob/a5d8988955d477b92453eaf6e565ec64541fcdbf/data/gravity_models/EGM2008_120.gfc)，
 来源及 SHA-256 见 [data/gravity.manifest.json](data/gravity.manifest.json)。原始全球模型由 NGA 发布，可通过 [ICGEM](https://icgem.gfz.de/tom_longtime) 获取。
@@ -46,8 +50,8 @@ EGM2008 原始文献：[Pavlis 等，2012](https://doi.org/10.1029/2011JB008916)
 ECEF 中加入科里奥利和离心项；自转角速度取 7.292115e-5 rad/s。
 沿轨/法向基由位置与惯性速度方向建立，后者为 ECEF 速度加 Ω×r。
 
-仍未实现日月引力、潮汐、物理大气密度与阻力、太阳辐射压、极移或精密 EOP。
-因此本例保留“简化动力学”的标识，不能称作论文完整 RDOP 的复现。
+这个旧版分支不包含日月引力、潮汐、物理大气密度与阻力、太阳辐射压、极移或精密 EOP。
+当前默认已经补充这些项，但与论文仍有 DTM94/DTM2000 等差异。
 也可通过 --gravity j2 运行低阶引力对照。J2 常数见 [IERS 常数表](https://hpiers.obspm.fr/eop-pc/models/constants.html)。
 
 ## TimesFM

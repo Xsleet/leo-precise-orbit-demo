@@ -1,0 +1,34 @@
+{
+  "python": "3.12.7",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "packages": {
+    "numpy": "1.26.4",
+    "scipy": "1.14.1",
+    "numba": "0.61.2",
+    "matplotlib": "3.8.4",
+    "torch": "2.8.0+cpu",
+    "timesfm": "3.0.2",
+    "orekit-jpype": "13.1.9.0",
+    "JPype1": "1.7.1",
+    "jdk4py": "25.0.5.0"
+  },
+  "device": "cpu",
+  "checkpoint": "local:timesfm-3.0-pytorch",
+  "elapsed_seconds": 8.338689399999566,
+  "gravity": "precise",
+  "source_sha256": {
+    "main.py": "b2330d2bb7e2d0c94452a65e3951c27e0ba24ad2e2827b7ca8a1ee76dce4ed60",
+    "precise.py": "23bb93ed42d4dbe91e84af43bbf37fa967d95bf4df8b8f8c5095d87d9f831742",
+    "dynamics_cache.py": "908b7f586624e52adcf9b64d547db2509422927793c50fb9563446ef1ae993ab",
+    "prepare_forces.py": "0b6d4bb6f94c33891f5b5979efa615262e5fb0629930321bf3aa76e3f89fc2fc",
+    "rdop.py": "0d9ddbf926b08bb764d943f99c7b367fc5798a87211d1f986c3c6fd64635a7de",
+    "gravity.py": "b18efc465f76a04bb1cce2909efe61397ef4f9e15382cd1c76795c27c4a9d8d9",
+    "orbit.py": "9f85389d5da81d888d0fca4d98918843df3a92aa71a89eb6daa7a4e7221fbd8d",
+    "plotting.py": "a7b7000a41b74365f67e58e4537be18905660f934e0ae1df9f5e94a0f7bc29e8",
+    "compare_windows.py": "bba6e507c23d86620e11b3c5759f43619a663dede7f94a9fc876304ed84afaa4"
+  },
+  "force_manifest_sha256": "40f831dd527a387d2999e4a393247b63d9843ed9e47219a05be203eafe8450f1",
+  "dynamics_execution": "CPU; deterministic cached fits shared by CPU/GPU TimesFM runs",
+  "torch_threads": 4,
+  "gpu": null
+}

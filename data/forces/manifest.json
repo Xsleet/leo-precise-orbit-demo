@@ -1,0 +1,184 @@
+{
+  "tai-utc.dat": {
+    "url": "https://gitlab.orekit.org/api/v4/projects/18/repository/files/tai-utc.dat/raw?ref=2d6edc9118983d95c51303df05db16ada90b7ee2",
+    "sha256": "3524e1ae34d67e858873a89e59983bbc5bd100221da898e796c1b36036a310c3",
+    "bytes": 3321
+  },
+  "itrf-versions.conf": {
+    "url": "https://gitlab.orekit.org/api/v4/projects/18/repository/files/itrf-versions.conf/raw?ref=2d6edc9118983d95c51303df05db16ada90b7ee2",
+    "sha256": "1e012e8be0ab4c2682112ff70ffa57e0e090015f06032805a2f89f9ba19f3978",
+    "bytes": 4716
+  },
+  "finals2000A.all": {
+    "url": "https://gitlab.orekit.org/api/v4/projects/18/repository/files/Earth-Orientation-Parameters%2FIAU-2000%2Ffinals2000A.all/raw?ref=2d6edc9118983d95c51303df05db16ada90b7ee2",
+    "sha256": "4c2308a3a782f561a84f549ab0e074e745aa950facd9dff56e2e60a7eac8f042",
+    "bytes": 3776544
+  },
+  "SpaceWeather-All-v1.2.txt": {
+    "url": "https://gitlab.orekit.org/api/v4/projects/18/repository/files/CSSI-Space-Weather-Data%2FSpaceWeather-All-v1.2.txt/raw?ref=2d6edc9118983d95c51303df05db16ada90b7ee2",
+    "sha256": "9267ecbb956c92305dd32313728760be35915151c53619c6f3fa5ab6c215979d",
+    "bytes": 3533287
+  },
+  "lnx1900.405": {
+    "url": "https://ssd.jpl.nasa.gov/ftp/eph/planets/Linux/de405/lnx1900.405",
+    "sha256": "cff2353df48b39d769cd2201e1504e35b9f986c5cad2ad7daadaed730469281c",
+    "bytes": 13966960
+  },
+  "EGM2008-150.gfc": {
+    "url": "https://icgem.gfz.de/getmodel/gfc/c50128797a9cb62e936337c890e4425f03f0461d7329b09a8cc8561504465340/EGM2008.gfc",
+    "sha256": "005cd0848172d672cdadc427aabcf4a6c7f2f0d6bda04049d6736b09d38611b4",
+    "bytes": 1205552,
+    "processing": "degree/order <= 150; max_degree header changed to 150"
+  },
+  "eot11a-potential.dat": {
+    "sha256": "b13f0c094c36302d8e1b629251eb1cefbd48434311fbdfcf0519c883189c6380",
+    "bytes": 14277597,
+    "sources": {
+      "eot11a.OM1.cos.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.OM1.cos.gfc",
+        "sha256": "086eb8461f2b493fcf7bfcc5a8296179f34065a45cceb489c6877438ae88f9f8"
+      },
+      "eot11a.OM1.sin.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.OM1.sin.gfc",
+        "sha256": "6b9ac24bf0a13dc527869e280c4e103dd0cd2fa40a0184fe69ceac1235b41f11"
+      },
+      "eot11a.OM2.cos.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.OM2.cos.gfc",
+        "sha256": "b0f37e803bc151fbd60f19cddc80d996621ca8c8253ef72a03c24b7e6aa456b8"
+      },
+      "eot11a.OM2.sin.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.OM2.sin.gfc",
+        "sha256": "6b9ac24bf0a13dc527869e280c4e103dd0cd2fa40a0184fe69ceac1235b41f11"
+      },
+      "eot11a.SA.cos.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.SA.cos.gfc",
+        "sha256": "6ef38065df37df0e41751ce2ed0d6b66213ccbcf7791673376ede77aa1eb39e7"
+      },
+      "eot11a.SA.sin.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.SA.sin.gfc",
+        "sha256": "6b9ac24bf0a13dc527869e280c4e103dd0cd2fa40a0184fe69ceac1235b41f11"
+      },
+      "eot11a.SSA.cos.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.SSA.cos.gfc",
+        "sha256": "34379dd256e69abd8e3cce823b7963780e4c70ab7a4f6cfcc28e4ec6f330fb9b"
+      },
+      "eot11a.SSA.sin.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.SSA.sin.gfc",
+        "sha256": "6b9ac24bf0a13dc527869e280c4e103dd0cd2fa40a0184fe69ceac1235b41f11"
+      },
+      "eot11a.MM.cos.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.MM.cos.gfc",
+        "sha256": "974a399fcbf008d3f1e4b434d09366ba7a471d5edf3fb5267dd175619a23f926"
+      },
+      "eot11a.MM.sin.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.MM.sin.gfc",
+        "sha256": "336ff70132f5d1e0d4e453a97eb1f4dfac1eb5a5797482b263b33b0315ac0774"
+      },
+      "eot11a.MF.cos.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.MF.cos.gfc",
+        "sha256": "7d4594137b6f846e640a94a69dd1b764b41ce0aa492566added3c782ef5f4855"
+      },
+      "eot11a.MF.sin.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.MF.sin.gfc",
+        "sha256": "e3258f26e999352fe580da27b8c5161d11cc6372c3fa059d86d0910bc7a92e35"
+      },
+      "eot11a.MTM.cos.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.MTM.cos.gfc",
+        "sha256": "56d577dc8d350fd68d97b221bf633e5ffd85435bb68e984b944873b6f0ec4d12"
+      },
+      "eot11a.MTM.sin.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.MTM.sin.gfc",
+        "sha256": "346bf317770223e87c0397351f513cbad22d29739e1a8b31e711489805d94f06"
+      },
+      "eot11a.MSQ.cos.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.MSQ.cos.gfc",
+        "sha256": "b7ad61bffa7f09e01b45b2b8faadc98409da4d001b66b438524fd2db43950535"
+      },
+      "eot11a.MSQ.sin.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.MSQ.sin.gfc",
+        "sha256": "931a7f36a257ca9795ce206d1410db3ac02a2f1fef3c086761bf7e3fd73272bf"
+      },
+      "eot11a.Q1.cos.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.Q1.cos.gfc",
+        "sha256": "dd73a5f339a566f603e8a00294186fbc1e19b9480216aaf8502ba25ff8fe3fc2"
+      },
+      "eot11a.Q1.sin.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.Q1.sin.gfc",
+        "sha256": "3c31c986d3886f4cc3522a6e169ec914fff011c203804c0a390709192f903654"
+      },
+      "eot11a.O1.cos.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.O1.cos.gfc",
+        "sha256": "bec4fe39fa4223b33f1e65a959329b6df75fc945a164846aa1d64c1a09ae87ee"
+      },
+      "eot11a.O1.sin.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.O1.sin.gfc",
+        "sha256": "f6a2383013716652f747894d3607a5a5dadc2609b23719172337d6d9629e5754"
+      },
+      "eot11a.P1.cos.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.P1.cos.gfc",
+        "sha256": "ee08f568c79d442b0637eac89ee0e2a7f999a661bd8f52b9f61de2f34ac40a32"
+      },
+      "eot11a.P1.sin.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.P1.sin.gfc",
+        "sha256": "c23273b130735a442b31f577e3c1b53d63f2d701469643a1369e4cd66483ca3e"
+      },
+      "eot11a.K1.cos.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.K1.cos.gfc",
+        "sha256": "f7ca901b2b93e923e91b788655f59c06ecb7f3ec0af1ee49bb95ce12498acfb0"
+      },
+      "eot11a.K1.sin.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.K1.sin.gfc",
+        "sha256": "149e8de04d037f8a20025d94954d57b8bbeb86fe5efc55943c2cdfc3cb667772"
+      },
+      "eot11a.2N2.cos.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.2N2.cos.gfc",
+        "sha256": "3684b2799ae82cb614b28ca72e648768aa15c559fe6b9d525ae0a6285fbac9bf"
+      },
+      "eot11a.2N2.sin.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.2N2.sin.gfc",
+        "sha256": "b326e5371babf18f2ce831d618830589d4de7501541ca822d974dbd7e45f084a"
+      },
+      "eot11a.N2.cos.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.N2.cos.gfc",
+        "sha256": "a58b52fefb8c330daa966941e85cd363d9af820a22be3ea7a4df70a02f2f8440"
+      },
+      "eot11a.N2.sin.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.N2.sin.gfc",
+        "sha256": "e3322b1510fcf68b993cdfdcc94535e6b7123812182553e38f96b58e27055bf9"
+      },
+      "eot11a.M2.cos.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.M2.cos.gfc",
+        "sha256": "ca5a2cf0700d48c089054c978959c3c769193f21dea82b630b3c7c25970c0e8d"
+      },
+      "eot11a.M2.sin.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.M2.sin.gfc",
+        "sha256": "52e360a0389af672a021b014825daad1087045f52b8926e5e7baeded7394137d"
+      },
+      "eot11a.S2.cos.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.S2.cos.gfc",
+        "sha256": "28fe47ccc2dacb7a7c3ae0c635be0f42d8b2e44f2a27e1a3a175f8a02a250f15"
+      },
+      "eot11a.S2.sin.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.S2.sin.gfc",
+        "sha256": "90f72443d3b936beba59fa8f974e5ab6793d058dd3c569a1a97c0478e83b7042"
+      },
+      "eot11a.K2.cos.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.K2.cos.gfc",
+        "sha256": "ff9a9d5113b96efe66bc70e422fa54981543c24621f30014e28a2f03005bf566"
+      },
+      "eot11a.K2.sin.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.K2.sin.gfc",
+        "sha256": "061030e5db4e1aeaeff81c09e2ece80707a8b2bedbcfcf5390856fa6730bef82"
+      },
+      "eot11a.M4.cos.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.M4.cos.gfc",
+        "sha256": "9ebf6fc8b9943177f823ee5a5501939acf996c4bb34d23db947dce430ed60b56"
+      },
+      "eot11a.M4.sin.gfc": {
+        "url": "https://www.sirgas.org/archive/EOT11a/data/SphericalHarmonics/eot11a.M4.sin.gfc",
+        "sha256": "0cd40aacff119d47d1d4e2ef2a8f0552872b7158d678de0a51026dbf988446f2"
+      }
+    },
+    "processing": "C+=(Ccos-Ssin)/2; S+=(Csin+Scos)/2; C-=(Ccos+Ssin)/2; S-=(Csin-Scos)/2; n>=2; no extra phase or load factor. 18 main waves, no minor-wave admittance."
+  }
+}

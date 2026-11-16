@@ -49,7 +49,7 @@ def save_result(sample, predictions, details, number, output, device):
         "fit_minutes": FIT, "warmup_minutes": WARMUP, "context_points": CONTEXT,
         "horizon_minutes": HORIZON, "timesfm_revision": REVISION, "fine_tuned": False,
         "residual_sign": "reference - dynamics; correction added to same dynamics arc",
-        "dynamics": details["fit"]["gravity"] + " + 5 empirical accelerations; NOT full Li RDOP",
+        "dynamics": details["fit"].get("model", details["fit"]["gravity"] + " + 5 empirical accelerations"),
         "fit": details["fit"], "fresh_fit": details["fresh_fit"],
         "data_sha256": hashlib.sha256((ROOT / "data/orbit.csv").read_bytes()).hexdigest()}
     (output / "run.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
@@ -78,7 +78,7 @@ def save_result(sample, predictions, details, number, output, device):
     axes[3].grid(alpha=.2)
     axes[3].legend(fontsize=8, ncol=2)
     fig.suptitle(f"GRACE-FO C | {metadata['origin']} | window {number} | {device.upper()}\n"
-                 "Simplified dynamics + historical-error forecast (TimesFM is not fine-tuned)", fontsize=11)
+                 "Dynamics + historical-error forecast (TimesFM is not fine-tuned)", fontsize=11)
     fig.tight_layout()
     fig.savefig(output / "result.png", dpi=150)
     plt.close(fig)

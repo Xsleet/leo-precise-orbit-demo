@@ -45,14 +45,19 @@ def forecast_error(errors, evaluator):
     return result
 
 
-def predict(history, evaluator=None, gravity="egm2008"):
+def predict(history, evaluator=None, gravity="precise", refit=False):
     """只接收历史。未来参考值不进入拟合、坐标系、线性外推或 TimesFM。"""
     if history.shape != (HISTORY, 7) or not np.isfinite(history).all():
         raise ValueError(f"仅接受 {HISTORY} 个历史位置速度点，不接收未来参考")
     if not np.all(np.diff(history[:, 0]) == STEP):
         raise ValueError("历史采样间隔必须为 60 秒")
     # 1. 只拟合至 -20 min；之后连续积分，起报点 0 min 不重置状态。
-    trajectory, fit = fit_and_predict(history[:FIT + 1], WARMUP + HORIZON, gravity == "egm2008")
+    if gravity == "precise":
+        from dynamics_cache import fit_cached
+        fit_arc = lambda past, count: fit_cached(past, count, recompute=refit)
+    else:
+        fit_arc = lambda past, count: fit_and_predict(past, count, gravity == "egm2008")
+    trajectory, fit = fit_arc(history[:FIT + 1], WARMUP + HORIZON)
     basis = frames(trajectory)
     past_error = to_swr(history[:, 1:4] - trajectory[:HISTORY, :3], basis[:HISTORY])
     result = {"rdop": trajectory[HISTORY:, :3]}
@@ -65,7 +70,7 @@ def predict(history, evaluator=None, gravity="egm2008"):
         correction = forecast_error(past_error[-CONTEXT:], evaluator)
         result["rdop_timesfm"] = result["rdop"] + to_xyz(correction, basis[HISTORY:])
     # 更强的动力学对照：利用截至 0 min 的最新 8 h 数据重新拟合。
-    fresh, fresh_fit = fit_and_predict(history[-(FIT + 1):], HORIZON, gravity == "egm2008")
+    fresh, fresh_fit = fit_arc(history[-(FIT + 1):], HORIZON)
     result["fresh_rdop"] = fresh[-HORIZON:, :3]
     details = {"trajectory": trajectory, "basis": basis, "past_error_swr": past_error,
                "fit": fit, "fresh_fit": fresh_fit}
@@ -87,7 +92,8 @@ def arguments(batch=False):
     parser.add_argument("--device", choices=["cpu", "gpu"], default="cpu")
     parser.add_argument("--model", choices=["timesfm", "physics"], default="timesfm")
     parser.add_argument("--checkpoint", default=MODEL_ID)
-    parser.add_argument("--gravity", choices=["egm2008", "j2"], default="egm2008")
+    parser.add_argument("--gravity", choices=["precise", "egm2008", "j2"], default="precise")
+    parser.add_argument("--refit", action="store_true", help="不复用动力学缓存，重新拟合历史轨道")
     if not batch:
         parser.add_argument("--window", type=int, choices=range(1, WINDOWS + 1), default=1)
     args = parser.parse_args()
@@ -102,7 +108,7 @@ def main():
     data = np.loadtxt(ROOT / "data/orbit.csv", delimiter=",", skiprows=1)
     sample = select_window(data, args.window)
     evaluator = load_evaluator(args.device, args.checkpoint) if args.model == "timesfm" else None
-    predictions, details = predict(sample[:HISTORY], evaluator, args.gravity)
+    predictions, details = predict(sample[:HISTORY], evaluator, args.gravity, args.refit)
     output = ROOT / "outputs" / f"li2025-{args.gravity}-{args.model}-{args.device}" / f"window-{args.window:02d}"
     save_result(sample, predictions, details, args.window, output, args.device)
     print(f"结果：{output}")

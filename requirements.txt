@@ -2,3 +2,6 @@ numpy==1.26.4
 matplotlib==3.8.4
 scipy==1.14.1
 numba==0.61.2
+orekit-jpype==13.1.9.0
+JPype1==1.7.1
+jdk4py==25.0.5.0

@@ -86,7 +86,7 @@ class DataTests(unittest.TestCase):
             calls.append(observed.copy())
             return np.tile(observed[0, 1:7], (len(observed) + points, 1)), {}
         with patch("main.fit_and_predict", side_effect=fake_fit):
-            result, details = demo.predict(sample[:demo.HISTORY], Evaluator())
+            result, details = demo.predict(sample[:demo.HISTORY], Evaluator(), gravity="egm2008")
         self.assertEqual(len(seen), 1)
         np.testing.assert_array_equal(calls[0], sample[:481])
         np.testing.assert_array_equal(calls[1], sample[20:501])

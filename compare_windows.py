@@ -3,6 +3,7 @@ import hashlib
 import importlib.metadata
 import json
 import platform
+from pathlib import Path
 import sys
 import time
 import numpy as np
@@ -30,7 +31,7 @@ def summarize(all_errors):
 def main():
     args = arguments(batch=True)
     source_hashes = {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
-                     for name in ["main.py", "rdop.py", "gravity.py", "orbit.py", "plotting.py", "compare_windows.py"]}
+                     for name in ["main.py", "precise.py", "dynamics_cache.py", "prepare_forces.py", "rdop.py", "gravity.py", "orbit.py", "plotting.py", "compare_windows.py"]}
     start = time.perf_counter()
     data = np.loadtxt(ROOT / "data/orbit.csv", delimiter=",", skiprows=1)
     samples = [select_window(data, number) for number in range(1, WINDOWS + 1)]
@@ -39,7 +40,7 @@ def main():
     all_errors, window_rows = {}, []
     for number, sample in enumerate(samples, 1):
         print(f"Window {number}/{WINDOWS}", flush=True)
-        predictions, details = predict(sample[:HISTORY], evaluator, args.gravity)
+        predictions, details = predict(sample[:HISTORY], evaluator, args.gravity, args.refit)
         errors, metrics = save_result(sample, predictions, details, number,
                                        folder / f"window-{number:02d}", args.device)
         window_rows.extend({"window": number, **row} for row in metrics)
@@ -68,19 +69,22 @@ def main():
     for ax in axes:
         ax.grid(alpha=.2)
     axes[1].legend(fontsize=7)
-    fig.suptitle(f"All {WINDOWS} fixed windows | {args.device.upper()} | simplified dynamics")
+    fig.suptitle(f"All {WINDOWS} fixed windows | {args.device.upper()} | {args.gravity} dynamics")
     fig.tight_layout()
     fig.savefig(folder / "comparison.png", dpi=150)
     plt.close(fig)
     packages = {}
-    for name in ["numpy", "scipy", "numba", "matplotlib", "torch", "timesfm"]:
+    for name in ["numpy", "scipy", "numba", "matplotlib", "torch", "timesfm", "orekit-jpype", "JPype1", "jdk4py"]:
         try:
             packages[name] = importlib.metadata.version(name)
         except importlib.metadata.PackageNotFoundError:
             pass
     metadata = {"python": platform.python_version(), "platform": platform.platform(), "packages": packages,
-        "device": args.device, "checkpoint": args.checkpoint, "elapsed_seconds": time.perf_counter() - start,
+        "device": args.device, "checkpoint": ("local:" + Path(args.checkpoint).name if Path(args.checkpoint).is_dir() else args.checkpoint), "elapsed_seconds": time.perf_counter() - start,
         "gravity": args.gravity, "source_sha256": source_hashes}
+    if args.gravity == "precise":
+        metadata["force_manifest_sha256"] = hashlib.sha256((ROOT / "data/forces/manifest.json").read_bytes()).hexdigest()
+        metadata["dynamics_execution"] = "CPU; deterministic cached fits shared by CPU/GPU TimesFM runs"
     if evaluator is not None:
         import torch
         metadata["torch_threads"] = torch.get_num_threads()

@@ -1,0 +1,101 @@
+{
+  "workers": 8,
+  "arcs": [
+    {
+      "window": 3,
+      "fresh": true,
+      "seconds": 395.36222710006405,
+      "fit_rms": 0.088957033704677
+    },
+    {
+      "window": 4,
+      "fresh": true,
+      "seconds": 401.496346800006,
+      "fit_rms": 0.09134000155921236
+    },
+    {
+      "window": 4,
+      "fresh": false,
+      "seconds": 433.37629759998526,
+      "fit_rms": 0.17983740149099858
+    },
+    {
+      "window": 1,
+      "fresh": false,
+      "seconds": 476.6572400999721,
+      "fit_rms": 0.4360092889368448
+    },
+    {
+      "window": 2,
+      "fresh": false,
+      "seconds": 488.6207134000724,
+      "fit_rms": 0.3440524419498491
+    },
+    {
+      "window": 2,
+      "fresh": true,
+      "seconds": 523.2164989999728,
+      "fit_rms": 0.2537300362882957
+    },
+    {
+      "window": 3,
+      "fresh": false,
+      "seconds": 614.5123454999411,
+      "fit_rms": 0.08833469016227871
+    },
+    {
+      "window": 1,
+      "fresh": true,
+      "seconds": 848.8002301000524,
+      "fit_rms": 0.37343628181039107
+    },
+    {
+      "window": 5,
+      "fresh": false,
+      "seconds": 480.6296230999287,
+      "fit_rms": 0.09703181023222945
+    },
+    {
+      "window": 6,
+      "fresh": true,
+      "seconds": 418.3225379000651,
+      "fit_rms": 0.0750345741822522
+    },
+    {
+      "window": 6,
+      "fresh": false,
+      "seconds": 487.46603920008056,
+      "fit_rms": 0.1027362410151078
+    },
+    {
+      "window": 5,
+      "fresh": true,
+      "seconds": 519.950186500093,
+      "fit_rms": 0.06840744228637968
+    },
+    {
+      "window": 7,
+      "fresh": false,
+      "seconds": 435.3833035000134,
+      "fit_rms": 0.30125340136222406
+    },
+    {
+      "window": 8,
+      "fresh": false,
+      "seconds": 340.91202180006076,
+      "fit_rms": 0.0665812190508341
+    },
+    {
+      "window": 7,
+      "fresh": true,
+      "seconds": 443.09826780005824,
+      "fit_rms": 0.10225356987287582
+    },
+    {
+      "window": 8,
+      "fresh": true,
+      "seconds": 258.3737590999808,
+      "fit_rms": 0.07381901035695582
+    }
+  ]
+}

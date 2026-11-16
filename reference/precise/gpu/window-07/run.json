@@ -1,0 +1,142 @@
+{
+  "window": 7,
+  "origin": "2025-06-03 12:00 GPS",
+  "device": "gpu",
+  "reference": "GRACE-FO C GNV1B RL04",
+  "frame": "ECEF, residual in SWR",
+  "fit_minutes": 480,
+  "warmup_minutes": 20,
+  "context_points": 360,
+  "horizon_minutes": 60,
+  "timesfm_revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
+  "fine_tuned": false,
+  "residual_sign": "reference - dynamics; correction added to same dynamics arc",
+  "dynamics": "DE405; IERS2010 solid/pole tides; EOT11a 18 waves; DTM2000; 8-panel SRP; 1PR S/W; relativity",
+  "fit": {
+    "gravity": "EGM2008 150x150 / Orekit",
+    "fit_start_gps_seconds": 802194000.0,
+    "fit_end_gps_seconds": 802222800.0,
+    "fit_points": 481,
+    "fit_rms_3d_m": 0.30125340136222406,
+    "empirical_m_s2": [
+      -6.201598236858404e-08,
+      1.3647191823614504e-08,
+      2.0672914028908905e-08,
+      3.97802015028393e-09
+    ],
+    "drag_factors": [
+      1.2204288370237626,
+      0.8845430777195495,
+      0.7125188964972958,
+      0.8830097227085607,
+      0.9124121704685405
+    ],
+    "drag_segment_start_gps_seconds": [
+      802194000.0,
+      802200248.4893277,
+      802205886.3672458,
+      802211524.2451639,
+      802217162.1230819
+    ],
+    "drag_period_seconds": 5637.877918070758,
+    "initial_state_adjustment": [
+      -0.07716181052613372,
+      -0.44906939574370225,
+      0.4717401548139934,
+      0.00023835794161014047,
+      0.0006161822947269976,
+      -0.0004257956446812908
+    ],
+    "initial_state_frame": "GCRF",
+    "nominal_mass_kg": 601.214,
+    "parameters_scaled": [
+      -0.07716181052613372,
+      -0.44906939574370225,
+      0.4717401548139934,
+      0.23835794161014046,
+      0.6161822947269976,
+      -0.4257956446812908,
+      -0.6201598236858403,
+      0.13647191823614505,
+      0.20672914028908906,
+      0.0397802015028393,
+      2.204288370237626,
+      -1.1545692228045044,
+      -2.8748110350270415,
+      -1.1699027729143923,
+      -0.8758782953145947
+    ],
+    "solver_status": 3,
+    "function_evaluations": 15,
+    "linearizations": 2,
+    "jacobian": "Orekit variational equations",
+    "optimality": 0.4486586062867611,
+    "model": "DE405; IERS2010 solid/pole tides; EOT11a 18 waves; DTM2000; 8-panel SRP; 1PR S/W; relativity",
+    "cache_key": "c375d7049b302fff2cfffa2c3d574568d9efb8fca854e5ad6ea03e6de9d104a5",
+    "cache_origin": "outputs\\dynamics-cache\\c375d7049b302fff2cfffa2c3d574568d9efb8fca854e5ad6ea03e6de9d104a5.npz"
+  },
+  "fresh_fit": {
+    "gravity": "EGM2008 150x150 / Orekit",
+    "fit_start_gps_seconds": 802195200.0,
+    "fit_end_gps_seconds": 802224000.0,
+    "fit_points": 481,
+    "fit_rms_3d_m": 0.10225356987287582,
+    "empirical_m_s2": [
+      -2.9095276947635843e-08,
+      -4.348345015087583e-08,
+      4.184946441325234e-10,
+      1.950342307134077e-08
+    ],
+    "drag_factors": [
+      1.2431689126918428,
+      0.7975283821441487,
+      0.7188551885792326,
+      0.9448767953294834,
+      0.913771716153609
+    ],
+    "drag_segment_start_gps_seconds": [
+      802195200.0,
+      802201540.7454723,
+      802207155.5593543,
+      802212770.3732362,
+      802218385.187118
+    ],
+    "drag_period_seconds": 5614.813881916592,
+    "initial_state_adjustment": [
+      0.051494222914329466,
+      0.062302042813700415,
+      0.30255145963478947,
+      -8.048311061043366e-05,
+      -2.189761576005133e-05,
+      -0.00042120980070205145
+    ],
+    "initial_state_frame": "GCRF",
+    "nominal_mass_kg": 601.214,
+    "parameters_scaled": [
+      0.051494222914329466,
+      0.062302042813700415,
+      0.30255145963478947,
+      -0.08048311061043366,
+      -0.02189761576005133,
+      -0.42120980070205144,
+      -0.29095276947635845,
+      -0.4348345015087583,
+      0.004184946441325234,
+      0.1950342307134077,
+      2.4316891269184273,
+      -2.0247161785585135,
+      -2.811448114207674,
+      -0.5512320467051662,
+      -0.86228283846391
+    ],
+    "solver_status": 3,
+    "function_evaluations": 17,
+    "linearizations": 2,
+    "jacobian": "Orekit variational equations",
+    "optimality": 15.533645557863405,
+    "model": "DE405; IERS2010 solid/pole tides; EOT11a 18 waves; DTM2000; 8-panel SRP; 1PR S/W; relativity",
+    "cache_key": "b5f67e3d66e8cece96cf74be63b91cc15ea9ec99a8b14075f94d5ba0c95733d3",
+    "cache_origin": "outputs\\dynamics-cache\\b5f67e3d66e8cece96cf74be63b91cc15ea9ec99a8b14075f94d5ba0c95733d3.npz"
+  },
+  "data_sha256": "665c25824dbf3ba8d4d0ae7e6b7bea60b0ab697bf1b901dcabc332c77322e320"
+}
