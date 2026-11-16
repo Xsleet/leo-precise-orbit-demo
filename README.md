@@ -1,24 +1,26 @@
-# 低轨卫星精密轨道预测 Demo
+# 低轨卫星精密轨道预报 Demo
 
-用 **GRACE-FO C 星的真实 GNV1B 精密轨道产品**，演示动力学与时间序列模型的结合。
+用 GRACE-FO C 的真实精密轨道，演示 **动力学预报 + TimesFM 误差预报**。
+参考 Li 等（2025）的实验结构：**8 小时历史拟合 → 20 分钟预热 → 未来 60 分钟预报**。
 
-**过去 6 小时 → 起报虚线 → 未来 60 分钟**，新增 **动力学＋TimesFM 误差预报**，保留 CPU/GPU。
+**本次 8 个固定窗口：整段三维 RMS 从 5.871 m 降到 0.858 m。**
+CPU/GPU 均已实测；使用原始 TimesFM 3.0，没有微调。精密指参考轨道产品，本例尚未达到论文厘米级预报。
 
-## 1. 先理解这三步
+## 1. 先看懂三个步骤
 
-1. 从起报点**已知的位置和速度**出发，用 J2 回算过去 6 小时，并外推未来 60 分钟。
-2. 计算 `历史误差 = GNV1B 历史位置 - J2 回算位置`，用原始 TimesFM 预报未来误差。
-3. `补偿预测 = J2 的未来位置 + TimesFM 预测误差`。
+1. 用过去 8 小时精密轨道，拟合动力学初始位置、速度及经验加速度。
+2. 留出起报前 20 分钟，看这条动力学预报最近错了多少；与前面的拟合残差一起输入 TimesFM。
+3. **最终预报 = 动力学未来位置 + TimesFM 预测的未来误差**。
 
-另外比较 **二体、J2、TimesFM 直接预测 XYZ**，共四种方法。J2 回算和预报属于同一条轨道，起报点不更换基线；回算只使用起报前已知状态，未来 GNV1B 只用于评分。
+输入 TimesFM 的是最近 6 小时沿轨/法向/径向误差，不直接预测巨大的 XYZ 坐标。
+默认动力学为 EGM2008 120 阶/次重力场 + 经验加速度，底层计算与主流程分开。
 
-**“精密”指参考轨道产品与任务，不表示已实现厘米级预报。** 这是后处理精密轨道产品的离线回放，没有模拟产品发布延迟。
-
-先读约 130 行的 [main.py](main.py)，核心是 `predict()`；画图单独放在 [plotting.py](plotting.py)，动力学在 [orbit.py](orbit.py)。**两个 TimesFM 分支使用同一个官方原始模型，没有微调。**
+先读 [基础知识与 10:00 起报例子](BASICS.md)，再读 [main.py](main.py) 的 predict()。
+拟合和积分在 [rdop.py](rdop.py)，高阶引力在 [gravity.py](gravity.py)，图表在 [plotting.py](plotting.py)。
 
 ## 2. 下载与运行
 
-安装 Python **3.11 或 3.12** 和 Git：
+安装 Python 3.11 或 3.12 和 Git：
 
 ```bash
 git clone https://github.com/Xsleet/leo-precise-orbit-demo.git
@@ -26,7 +28,8 @@ cd leo-precise-orbit-demo
 python -m venv .venv
 ```
 
-Windows 命令提示符：`.venv\Scripts\activate.bat`；Linux/macOS：`source .venv/bin/activate`。PowerShell 可将下文 `python` 换为 `.\.venv\Scripts\python.exe`。
+Windows 命令提示符执行 `.venv\Scripts\activate.bat`；Linux/macOS 执行 `source .venv/bin/activate`。
+PowerShell 可直接将下文 python 换成 `.\.venv\Scripts\python.exe`。
 
 **CPU：**
 
@@ -44,43 +47,39 @@ python -m pip install -r requirements-timesfm.txt
 python main.py --device gpu
 ```
 
-CPU/GPU 只改变 TimesFM 推理设备，动力学仍在 CPU。首次自动下载约 **1.32 GB** 模型，不需要训练；正常运行使用附带数据，无需轨道数据网站登录或服务器。macOS 将 CPU 安装首条命令换为 `python -m pip install torch==2.8.0`。[PyTorch 官方安装说明](https://pytorch.org/get-started/previous-versions/#v280)。
+macOS 的 PyTorch 安装命令改为 `python -m pip install torch==2.8.0`，运行时选 cpu。
+首次自动下载约 1.32 GB 模型。Numba 首次编译和 8 小时轨道拟合需要一些时间，终端会输出进度。
+**GPU 只加速 TimesFM，动力学拟合仍在 CPU，整体运行时间未必显著缩短。**
 
-只跑动力学、不下载模型：`python -m pip install -r requirements.txt`，然后 `python main.py --model physics`。
+不下载大模型，只看动力学和线性对照：
+
+```bash
+python -m pip install -r requirements.txt
+python main.py --model physics
+```
 
 ## 3. 看懂结果
 
-![过去轨迹、历史误差与未来预测](data/example.png)
+![过去6小时误差、预热、未来60分钟](data/example.png)
 
-- 上图：Z 坐标的过去轨迹与未来预测。
-- 中图：**去除动力学轨道后的 Z 误差 → 起报虚线 → 未来误差预报**；零线代表不补偿。黑色点线仅用于事后评分。
-- 下图：全部 XYZ 的三维误差，使用对数纵轴；不能只凭 Z 曲线是否重合判断精度。
+前三行依次是沿轨、法向、径向误差：**过去 6 小时 → 蓝色预热区 → 起报虚线 → 未来 60 分钟**。
+黑色点线是留后的参考误差，只用于事后评分；最下面是真正的三维位置误差。
 
-起报点 J2 由已知状态初始化，所以历史误差末点为零；未来误差仍可能增长。
+| 方法 | CPU 整段 RMS（m） | GPU 整段 RMS（m） | GPU 60 min RMSE（m） |
+|---|---:|---:|---:|
+| 动力学（拟合至起报前 20 min） | 5.871 | 5.871 | 6.958 |
+| 动力学＋线性误差 | 11.050 | 11.050 | 17.274 |
+| 动力学＋TimesFM 误差 | 0.858 | 0.858 | 1.674 |
+| 动力学（用最新历史重新拟合） | 4.798 | 4.798 | 6.131 |
 
-**全部 8 个固定窗口合并的三维 RMS（m）**，相对 GNV1B 精密轨道：
+TimesFM 的整段 RMS 相对同一动力学轨道降低 **85.4%**，改善 **8/8** 个窗口。
+“最新历史重新拟合”利用截至起报时的观测，是比只延续旧轨道更强的动力学对照。
 
-| 方法 | CPU | GPU |
-|---|---:|---:|
-| 二体 | 36,568.996 | 36,568.996 |
-| J2 | 355.724 | 355.724 |
-| TimesFM 直接预测 XYZ | 504,960.215 | 504,960.012 |
-| **J2＋TimesFM 误差预报** | 392.956 | 392.956 |
+与论文对应的 **60 min 三维 RMSE**：本例 **6.958 → 1.674 m**；
+Li 等（2025）为 **0.147 → 0.060 m**。动力学配置、年份、训练方式和测试规模不同，不能据相对降幅给网络排名。
+完整逐时长、逐窗口结果见 [RESULTS.md](RESULTS.md)。
 
-补偿相比直接 XYZ 预测大幅改善；相对 J2，**4/8 个窗口变好，合并 RMS 反而变差**（约 393 m 对 356 m）。原始 TimesFM 没有针对轨道误差训练，因此不保证补偿有效。这里保留全部窗口，不挑选最好看的结果。
-
-![全部窗口比较](data/comparison.png)
-
-`outputs/timesfm-cpu/window-01/` 中：`result.png` 是图，`history.csv` 保存历史参考、动力学与误差，`prediction.csv` 保存未来参考及各方法预测，`metrics.csv` 保存 RMS/60 分钟误差，`run.json` 保存方法和窗口说明。GPU 对应 `timesfm-gpu`。
-
-```text
-三维误差 = sqrt(dx² + dy² + dz²)
-RMS(3D) = sqrt(全部未来点的三维误差平方的平均值)
-```
-
-## 4. 换窗口与自主分析
-
-8 个固定起报时刻为 **2025 年 6 月 2–3 日每天 00、06、12、18 时（GPS）**，与上一版一致。GPS 时间不是 UTC。
+## 4. 自己运行全部窗口
 
 ```bash
 python main.py --device cpu --window 3
@@ -88,12 +87,29 @@ python compare_windows.py --device cpu
 python compare_windows.py --device gpu
 ```
 
-每个窗口取 360 点（-359 至 0 分钟），预测 +1 至 +60 分钟；间隔 60 s。批处理只加载一次模型，保存所有窗口及 `by_window.csv`、`summary.csv`、`comparison.png`。也支持 `--model physics`。
+八个窗口为 2025 年 6 月 2–3 日每天 00、06、12、18 时（GPS）。也可加 `--gravity j2` 查看低阶动力学对照。
+已有模型文件时加 `--checkpoint 模型目录`。首次运行推荐默认窗口 1。
 
-给学生的三个问题：补偿在哪些窗口有效？为何直接预测 XYZ 比预测误差困难？为什么去掉大幅周期轨道后，剩余误差仍不好预测？
+结果在 `outputs/li2025-egm2008-timesfm-cpu/` 或对应 gpu 目录：
 
-数据来源、坐标、时间假设和限制见 [DATA_SOURCES.md](DATA_SOURCES.md)；完整 CPU/GPU 实测结果见 [reference](reference/README.md)。`python -m unittest discover -v` 检查时间边界、误差加回、J2 正反向积分和归档指标。CI 检查 Windows/Linux、Python 3.11/3.12 的基础流程，不在线下载大模型。
+| 文件 | 用途 |
+|---|---|
+| window-01/result.png | 历史误差与未来预报图 |
+| window-01/history.csv | 历史输入、残差、预热和输入标记 |
+| window-01/prediction.csv | 未来参考与各方法预测坐标 |
+| window-01/run.json | 拟合参数、时间边界、模型版本 |
+| summary.csv / by_window.csv | 整体与逐窗口成绩 |
+| by_lead.csv / paper_comparison.csv | 各预报时长 RMSE 与论文对照 |
 
-自编代码为 MIT；数据和模型遵循各自许可。TimesFM 3.0 权重用于非商业、非生产教学研究，仓库不分发权重，见 [模型许可](https://huggingface.co/google/timesfm-3.0-pytorch/blob/main/LICENSE)。
+真实 CPU/GPU 运行归档在 [reference/li2025](reference/li2025/README.md)。
+数据与假设见 [DATA_SOURCES.md](DATA_SOURCES.md)，实验设置与修改记录见 [EXPERIMENT.md](EXPERIMENT.md)。
+`python -m unittest discover -v` 运行无需 TimesFM 权重的检查。
+
+## 5. 给学生的三个问题
+
+为什么要留出 20 分钟预热？为什么线性外推会错过周期变化？为什么更大的相对改善不等于更高的绝对精度？
+
+本例是后处理精密产品的离线回放，未模拟发布延迟；简化动力学尚缺潮汐、日月引力、物理阻力、太阳辐射压和精密 EOP。
+自编代码 MIT；数据与模型遵循各自许可。TimesFM 3.0 仅用于其许可允许的非商业、非生产教学研究，见 [模型许可](https://huggingface.co/google/timesfm-3.0-pytorch/blob/main/LICENSE)。
 
 同系列：[精密钟差预报](https://github.com/Xsleet/gracefo-clock-prediction) · [空间碎片轨道预测](https://github.com/Xsleet/space-debris-orbit-demo)

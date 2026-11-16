@@ -1,0 +1,11 @@
+{
+  "check": "same fitted parameters, full 8h20min history + 60min future",
+  "default_rtol": 2e-12,
+  "reference_rtol": 2e-14,
+  "max_position_difference_m": 0.005880542630522271,
+  "endpoint_position_difference_m": 0.004922671738196469,
+  "finer_vs_finest_max_m": 0.0029365866439170726,
+  "interpretation": "millimetre-level integration sensitivity, below observed metre-level forecast errors; not proof of centimetre orbit accuracy",
+  "effective_reference_rtol": 2.220446049250313e-14,
+  "tolerance_note": "SciPy clips the requested 2e-14 rtol to 100 times machine epsilon."
+}

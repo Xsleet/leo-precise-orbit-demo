@@ -1,0 +1,9 @@
+{
+  "pooled_gain_vs_same_arc_percent": 85.37740260646213,
+  "endpoint_gain_vs_same_arc_percent": 75.93746045528111,
+  "pooled_gain_vs_fresh_fit_percent": 82.11011544411156,
+  "rms_wins_vs_same_arc": 8,
+  "endpoint_wins_vs_same_arc": 8,
+  "rms_wins_vs_fresh_fit": 8,
+  "endpoint_wins_vs_fresh_fit": 8
+}

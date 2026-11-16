@@ -1,2 +1,7 @@
 * text=auto eol=lf
 *.png binary
+# Preserve exact run-source bytes for the recorded SHA-256 values.
+reference/li2025/source/* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+reference/li2025/j2-source/* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+# Upstream model file is retained verbatim, including two space-only header lines.
+data/EGM2008_120.gfc -whitespace

@@ -1,0 +1,7 @@
+{
+  "reference_implementation": "Brahe 1.9.0 Rust native spherical harmonics",
+  "sampled_positions": 101,
+  "degree_order": 120,
+  "max_absolute_component_difference_m_s2": 8.704148513061227e-14,
+  "tolerance_m_s2": 1e-10
+}

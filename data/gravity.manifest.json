@@ -1,0 +1,7 @@
+{
+  "model": "EGM2008 truncated to degree/order 120",
+  "url": "https://raw.githubusercontent.com/duncaneddy/brahe/a5d8988955d477b92453eaf6e565ec64541fcdbf/data/gravity_models/EGM2008_120.gfc",
+  "sha256": "d733d2c4c19b968e2325c755924e448c91077024679e7a1f72c80ebcb0480b36",
+  "original_reference": "https://doi.org/10.1029/2011JB008916",
+  "provider": "NGA / ICGEM, packaged by Brahe"
+}

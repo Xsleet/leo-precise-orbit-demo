@@ -1,0 +1,64 @@
+{
+  "window": 1,
+  "origin": "2025-06-02 00:00 GPS",
+  "device": "cpu",
+  "reference": "GRACE-FO C GNV1B RL04",
+  "frame": "ECEF, residual in SWR",
+  "fit_minutes": 480,
+  "warmup_minutes": 20,
+  "context_points": 360,
+  "horizon_minutes": 60,
+  "timesfm_revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
+  "fine_tuned": false,
+  "residual_sign": "reference - dynamics; correction added to same dynamics arc",
+  "dynamics": "EGM2008 120x120 + 5 empirical accelerations; NOT full Li RDOP",
+  "fit": {
+    "gravity": "EGM2008 120x120",
+    "fit_start_gps_seconds": 802064400.0,
+    "fit_end_gps_seconds": 802093200.0,
+    "fit_points": 481,
+    "fit_rms_3d_m": 1.2335195563494052,
+    "empirical_m_s2": [
+      -2.5002162451929586e-07,
+      -9.715291016421952e-08,
+      9.810831065666312e-08,
+      4.408908595202721e-07,
+      1.3573986369614468e-06
+    ],
+    "initial_state_adjustment": [
+      0.45850349572304716,
+      -0.32555232301020387,
+      -1.5071320125282568,
+      0.000799978867080728,
+      0.002497079156125097,
+      -0.00016126450739708615
+    ],
+    "solver_status": 3,
+    "function_evaluations": 14
+  },
+  "fresh_fit": {
+    "gravity": "EGM2008 120x120",
+    "fit_start_gps_seconds": 802065600.0,
+    "fit_end_gps_seconds": 802094400.0,
+    "fit_points": 481,
+    "fit_rms_3d_m": 1.4012017469964895,
+    "empirical_m_s2": [
+      -2.463643589116457e-07,
+      -1.1436271465000562e-07,
+      8.715123121929886e-08,
+      4.791977209623263e-07,
+      1.1875865951216837e-06
+    ],
+    "initial_state_adjustment": [
+      1.7090999939340008,
+      2.270118883777378,
+      -1.0106445123903698,
+      2.9138659920491436e-06,
+      -0.00029833862114312217,
+      0.002019711159547029
+    ],
+    "solver_status": 3,
+    "function_evaluations": 15
+  },
+  "data_sha256": "665c25824dbf3ba8d4d0ae7e6b7bea60b0ab697bf1b901dcabc332c77322e320"
+}

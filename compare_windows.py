@@ -1,61 +1,93 @@
-"""按预先固定的时间顺序检查全部窗口，不根据未来误差筛选。模型只加载一次。"""
-import argparse
-import csv
+"""八个固定窗口全部评估；按预报时刻计算跨窗口 RMSE，与论文 Table 5 对齐。"""
+import hashlib
+import importlib.metadata
+import json
+import platform
 import sys
-
+import time
 import numpy as np
-from main import (ROOT, WINDOWS, HISTORY, MODEL_ID, OBJECT, REFERENCE, ERROR_LABEL,
-                  select_window, predict, save_result, load_evaluator)
-from plotting import plt, NAMES, COLORS
+from main import ROOT, WINDOWS, HISTORY, arguments, select_window, predict, load_evaluator
+from plotting import plt, NAMES, COLORS, write_csv, save_result
+
+
+def summarize(all_errors):
+    """不把误差范数的算术平均冒充 RMSE；所有窗口权重相同。"""
+    rows, lead_rows = [], []
+    for name, values in all_errors.items():
+        errors = np.stack(values)  # [window, lead], 每个元素为三维距离
+        rms = np.sqrt(np.mean(errors**2, axis=1))
+        lead_rmse = np.sqrt(np.mean(errors**2, axis=0))
+        rows.append({"model": name, "windows": len(values),
+            "pooled_rms_3d_m": float(np.sqrt(np.mean(errors**2))),
+            "endpoint_rmse_3d_m": float(lead_rmse[-1]),
+            "median_window_rms_3d_m": float(np.median(rms)),
+            "worst_window_rms_3d_m": float(rms.max())})
+        for minute, value in enumerate(lead_rmse, 1):
+            lead_rows.append({"model": name, "lead_minutes": minute, "rmse_3d_m": float(value)})
+    return rows, lead_rows
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--device", choices=["cpu", "gpu"], default="cpu")
-    parser.add_argument("--model", choices=["timesfm", "physics"], default="timesfm")
-    parser.add_argument("--checkpoint", default=MODEL_ID)
-    args = parser.parse_args()
-    if args.model == "physics" and args.device == "gpu":
-        parser.error("GPU 选项用于 TimesFM，动力学模型使用 CPU")
-    print(f"Reference: {REFERENCE}", flush=True)
+    args = arguments(batch=True)
+    source_hashes = {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
+                     for name in ["main.py", "rdop.py", "gravity.py", "orbit.py", "plotting.py", "compare_windows.py"]}
+    start = time.perf_counter()
     data = np.loadtxt(ROOT / "data/orbit.csv", delimiter=",", skiprows=1)
-    samples = [select_window(data, n) for n in range(1, WINDOWS + 1)]
+    samples = [select_window(data, number) for number in range(1, WINDOWS + 1)]
     evaluator = load_evaluator(args.device, args.checkpoint) if args.model == "timesfm" else None
-    folder = ROOT / "outputs" / f"{args.model}-{args.device}"
-    rows = []
+    folder = ROOT / "outputs" / f"li2025-{args.gravity}-{args.model}-{args.device}"
+    all_errors, window_rows = {}, []
     for number, sample in enumerate(samples, 1):
         print(f"Window {number}/{WINDOWS}", flush=True)
-        predictions, past_error = predict(sample[:HISTORY], evaluator)
-        output = folder / f"window-{number:02d}"
-        save_result(sample, predictions, past_error, number, output, args.device)
-        with (output / "metrics.csv").open(encoding="utf-8", newline="") as stream:
-            rows.extend({"window": number, **row} for row in csv.DictReader(stream))
-    summaries = []
-    fig, ax = plt.subplots(figsize=(8, 4))
-    for model in predictions:
-        selected = [row for row in rows if row["model"] == model]
-        rms = np.array([float(row["rms_3d_m"]) for row in selected])
-        endpoint = [float(row["endpoint_3d_m"]) for row in selected]
-        # 每个窗口长度相同，因此合并 RMS 是各窗口 RMS 平方均值的平方根。
-        summaries.append({"model": model, "windows": WINDOWS,
-            "pooled_rms_3d_m": float(np.sqrt(np.mean(rms**2))),
-            "median_window_rms_3d_m": float(np.median(rms)),
-            "worst_window_rms_3d_m": float(rms.max()),
-            "mean_endpoint_3d_m": float(np.mean(endpoint))})
-        ax.plot(range(1, WINDOWS + 1), rms, "o-", label=NAMES[model], color=COLORS[model])
-    for filename, records in [("by_window.csv", rows), ("summary.csv", summaries)]:
-        with (folder / filename).open("w", encoding="utf-8", newline="") as stream:
-            writer = csv.DictWriter(stream, fieldnames=list(records[0]))
-            writer.writeheader()
-            writer.writerows(records)
-    ax.set(xticks=range(1, WINDOWS + 1), xlabel="Fixed forecast window", yscale="log",
-           ylabel="RMS: " + ERROR_LABEL, title=f"{OBJECT} | {args.device.upper()} | {WINDOWS} windows")
-    ax.grid(alpha=.2)
-    ax.legend(fontsize=8, ncol=2)
+        predictions, details = predict(sample[:HISTORY], evaluator, args.gravity)
+        errors, metrics = save_result(sample, predictions, details, number,
+                                       folder / f"window-{number:02d}", args.device)
+        window_rows.extend({"window": number, **row} for row in metrics)
+        for name, error in errors.items():
+            all_errors.setdefault(name, []).append(error)
+    summaries, lead_rows = summarize(all_errors)
+    write_csv(folder / "by_window.csv", window_rows)
+    write_csv(folder / "summary.csv", summaries)
+    write_csv(folder / "by_lead.csv", lead_rows)
+    paper_rows = []
+    for minute, baseline_cm, hybrid_cm in zip([10, 20, 30, 60], [3., 4.9, 7.3, 14.7], [1., 1.9, 2.9, 6.]):
+        row = {"lead_minutes": minute, "paper_rdop_m": baseline_cm / 100,
+               "paper_dnn_rdop_m": hybrid_cm / 100}
+        for name, errors in all_errors.items():
+            row[name + "_m"] = float(np.sqrt(np.mean(np.stack(errors)[:, minute - 1]**2)))
+        paper_rows.append(row)
+    write_csv(folder / "paper_comparison.csv", paper_rows)
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+    for name, values in all_errors.items():
+        e = np.stack(values)
+        axes[0].plot(range(1, WINDOWS + 1), np.sqrt(np.mean(e**2, axis=1)), "o-",
+                     color=COLORS[name], label=NAMES[name])
+        axes[1].plot(range(1, 61), np.sqrt(np.mean(e**2, axis=0)), color=COLORS[name], label=NAMES[name])
+    axes[0].set(xlabel="Fixed window", ylabel="Whole-arc 3-D RMS (m)", xticks=range(1, WINDOWS + 1))
+    axes[1].set(xlabel="Forecast lead (min)", ylabel="Across-window 3-D RMSE (m)")
+    for ax in axes:
+        ax.grid(alpha=.2)
+    axes[1].legend(fontsize=7)
+    fig.suptitle(f"All {WINDOWS} fixed windows | {args.device.upper()} | simplified dynamics")
     fig.tight_layout()
     fig.savefig(folder / "comparison.png", dpi=150)
     plt.close(fig)
-    print(f"全部窗口及汇总：{folder}")
+    packages = {}
+    for name in ["numpy", "scipy", "numba", "matplotlib", "torch", "timesfm"]:
+        try:
+            packages[name] = importlib.metadata.version(name)
+        except importlib.metadata.PackageNotFoundError:
+            pass
+    metadata = {"python": platform.python_version(), "platform": platform.platform(), "packages": packages,
+        "device": args.device, "checkpoint": args.checkpoint, "elapsed_seconds": time.perf_counter() - start,
+        "gravity": args.gravity, "source_sha256": source_hashes}
+    if evaluator is not None:
+        import torch
+        metadata["torch_threads"] = torch.get_num_threads()
+        metadata["gpu"] = torch.cuda.get_device_name(0) if args.device == "gpu" else None
+    (folder / "environment.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps(summaries, indent=2), flush=True)
+    print(f"全部结果：{folder}", flush=True)
 
 
 if __name__ == "__main__":

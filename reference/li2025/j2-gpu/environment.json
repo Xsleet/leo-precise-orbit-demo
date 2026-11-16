@@ -1,0 +1,25 @@
+{
+  "python": "3.12.7",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "packages": {
+    "numpy": "1.26.4",
+    "scipy": "1.14.1",
+    "numba": "0.61.2",
+    "matplotlib": "3.8.4",
+    "torch": "2.8.0+cu128",
+    "timesfm": "3.0.2"
+  },
+  "device": "gpu",
+  "checkpoint": "C:\\Users\\xueyu\\Desktop\\LLMPred\\models\\timesfm-3.0-pytorch",
+  "elapsed_seconds": 248.13333920005243,
+  "source_sha256": {
+    "compare_windows.py": "9348668d1b232a7756bf2b9ca09d3b97eff5d64ceaf5c0398035325858b871b1",
+    "main.py": "552970f3f9809cc364874e1e9e27d81c00faf4ba54ed577369eda3beed6809b9",
+    "orbit.py": "9f85389d5da81d888d0fca4d98918843df3a92aa71a89eb6daa7a4e7221fbd8d",
+    "plotting.py": "e223c21b31e9d4a734dba62d3e54617e8bf999cac7bea825ab3d989bff2a7e7e",
+    "rdop.py": "03b94076521a92345df2c13cc316f1e3da4f96ae90d65100499904615d3c5a97"
+  },
+  "torch_threads": 4,
+  "gpu": "NVIDIA GeForce RTX 5070 Ti",
+  "source_hash_note": "Hashes reconstructed from the saved J2 source snapshot; final live files had advanced to EGM2008 before this old batch finished."
+}

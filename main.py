@@ -1,24 +1,14 @@
-"""低轨卫星精密轨道预测：J2 + TimesFM 误差补偿，保留直接 XYZ 预测。"""
+"""低轨卫星精密轨道预报：8 h 拟合 -> 20 min 预热 -> TimesFM 修正未来 60 min。"""
 import argparse
 from datetime import datetime, timedelta
 from pathlib import Path
 import sys
-
 import numpy as np
-from plotting import save_result as write_result
-
-from orbit import propagate
+from rdop import fit_and_predict, frames, to_swr, to_xyz
 
 ROOT = Path(__file__).resolve().parent
-HISTORY, HORIZON, STEP = 360, 60, 60
-WINDOWS = 8
-ROTATING = True
-FRAME = "ECEF"
-OBJECT = "GRACE-FO C"
-REFERENCE = "GNV1B reference"
-ERROR_LABEL = "3-D position error (m)"
-BASE, HYBRID = "j2", "j2_timesfm"
-RESIDUAL_CONSTRUCTION = "GNV1B minus J2 back-propagated from last historical state; same J2 arc continued into future"
+FIT, WARMUP, CONTEXT, HORIZON, STEP, WINDOWS = 480, 20, 360, 60, 60, 8
+HISTORY = FIT + WARMUP + 1  # 从 -500 到 0 分钟，共 501 个历史点
 MODEL_ID = "google/timesfm-3.0-pytorch"
 REVISION = "43046b85ec22d584a13f8098c2ed39c889e129c2"
 
@@ -44,41 +34,42 @@ def select_window(data, number):
     return sample
 
 
-def forecast_xyz(values, evaluator, scale):
-    """三个轴独立预测；位置以 km 输入，误差以 m 输入，均先减末值。"""
-    last = values[-1]
-    inputs = ((values - last) / scale).T.astype(np.float32)
+def forecast_error(errors, evaluator):
+    """S/W/R 三轴独立预测，float64 中减末值后再以米输入原始 TimesFM。"""
+    inputs = (errors - errors[-1]).T.astype(np.float32)
     outputs = list(evaluator.predict_batch(list(inputs), horizon=HORIZON,
         return_quantiles=False, make_positive=False, use_symmetric_averaging=False))
-    return np.stack([out.forecast for out in outputs], axis=1).astype(np.float64) * scale + last
+    result = np.stack([out.forecast for out in outputs], axis=1).astype(np.float64) + errors[-1]
+    if result.shape != (HORIZON, 3) or not np.isfinite(result).all():
+        raise ValueError("TimesFM 未返回完整、有限的三轴误差预报")
+    return result
 
 
-def predict(history, evaluator=None):
-    """只接收过去 360 点；误差预测加回同一条动力学轨道，没有微调。"""
+def predict(history, evaluator=None, gravity="egm2008"):
+    """只接收历史。未来参考值不进入拟合、坐标系、线性外推或 TimesFM。"""
     if history.shape != (HISTORY, 7) or not np.isfinite(history).all():
-        raise ValueError("预测只接受完整的 360 点历史，不接收未来参考")
-    result = {"two_body": propagate(history[-1, 1:7], HORIZON, STEP, False, ROTATING)[:, :3],
-              "j2": propagate(history[-1, 1:7], HORIZON, STEP, True, ROTATING)[:, :3]}
-    # 起报时已知的位置速度：回算过去，再向未来传播，起报点没有换轨道。
-    back = propagate(history[-1, 1:7], HISTORY - 1, -STEP, True, ROTATING)[:, :3]
-    past_base = np.vstack([back[::-1], history[-1, 1:4]])
-    past_error = history[:, 1:4] - past_base
+        raise ValueError(f"仅接受 {HISTORY} 个历史位置速度点，不接收未来参考")
+    if not np.all(np.diff(history[:, 0]) == STEP):
+        raise ValueError("历史采样间隔必须为 60 秒")
+    # 1. 只拟合至 -20 min；之后连续积分，起报点 0 min 不重置状态。
+    trajectory, fit = fit_and_predict(history[:FIT + 1], WARMUP + HORIZON, gravity == "egm2008")
+    basis = frames(trajectory)
+    past_error = to_swr(history[:, 1:4] - trajectory[:HISTORY, :3], basis[:HISTORY])
+    result = {"rdop": trajectory[HISTORY:, :3]}
+    # 2. 简单对照：只对预热段的 20 个实际预报误差拟合直线。
+    line = np.polyfit(np.arange(1 - WARMUP, 1), past_error[-WARMUP:], 1)
+    linear_error = np.arange(1, HORIZON + 1)[:, None] * line[0] + line[1]
+    result["rdop_linear"] = result["rdop"] + to_xyz(linear_error, basis[HISTORY:])
+    # 3. TimesFM 看到拟合残差 + 预热预报误差，修正同一条动力学轨道。
     if evaluator is not None:
-        result["timesfm"] = forecast_xyz(history[:, 1:4], evaluator, scale=1000)
-        result[HYBRID] = result[BASE] + forecast_xyz(past_error, evaluator, scale=1)
-    if any(values.shape != (HORIZON, 3) or not np.isfinite(values).all() for values in result.values()):
-        raise ValueError("模型未返回完整、有效的 XYZ 预测")
-    return result, past_error
-
-
-def save_result(sample, predictions, past_error, number, output, device):
-    metadata = {"window": number, "object": OBJECT, "origin": time_label(sample[HISTORY - 1, 0]),
-        "frame": FRAME, "reference": REFERENCE, "error_label": ERROR_LABEL, "device": device,
-        "history_points": HISTORY, "horizon_points": HORIZON, "step_seconds": STEP,
-        "timesfm_revision": REVISION, "residual_baseline": BASE, "hybrid_model": HYBRID,
-        "timesfm_input": "Independent XYZ (km) and residual XYZ (m), last-value centered; no fine-tuning",
-        "residual_construction": RESIDUAL_CONSTRUCTION}
-    write_result(sample, predictions, past_error, metadata, output)
+        correction = forecast_error(past_error[-CONTEXT:], evaluator)
+        result["rdop_timesfm"] = result["rdop"] + to_xyz(correction, basis[HISTORY:])
+    # 更强的动力学对照：利用截至 0 min 的最新 8 h 数据重新拟合。
+    fresh, fresh_fit = fit_and_predict(history[-(FIT + 1):], HORIZON, gravity == "egm2008")
+    result["fresh_rdop"] = fresh[-HORIZON:, :3]
+    details = {"trajectory": trajectory, "basis": basis, "past_error_swr": past_error,
+               "fit": fit, "fresh_fit": fresh_fit}
+    return result, details
 
 
 def load_evaluator(device, checkpoint):
@@ -86,31 +77,34 @@ def load_evaluator(device, checkpoint):
     from timesfm3 import ModelConfig, TimesFM3Evaluator
     if device == "gpu" and not torch.cuda.is_available():
         raise ValueError("未发现 NVIDIA GPU，请使用 --device cpu")
-    print("加载原始 TimesFM；首次下载约 1.32 GB 权重……", flush=True)
+    print("加载原始 TimesFM 3.0，无微调；首次下载约 1.32 GB……", flush=True)
     return TimesFM3Evaluator(ModelConfig(checkpoint_path=checkpoint, revision=REVISION,
         device="cuda" if device == "gpu" else "cpu", per_core_batch_size=1))
 
 
-def main():
+def arguments(batch=False):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--device", choices=["cpu", "gpu"], default="cpu")
     parser.add_argument("--model", choices=["timesfm", "physics"], default="timesfm")
-    parser.add_argument("--window", type=int, choices=range(1, WINDOWS + 1), default=1)
     parser.add_argument("--checkpoint", default=MODEL_ID)
+    parser.add_argument("--gravity", choices=["egm2008", "j2"], default="egm2008")
+    if not batch:
+        parser.add_argument("--window", type=int, choices=range(1, WINDOWS + 1), default=1)
     args = parser.parse_args()
     if args.model == "physics" and args.device == "gpu":
         parser.error("动力学模型使用 CPU；GPU 选项用于 TimesFM")
+    return args
+
+
+def main():
+    from plotting import save_result
+    args = arguments()
     data = np.loadtxt(ROOT / "data/orbit.csv", delimiter=",", skiprows=1)
-    try:
-        sample = select_window(data, args.window)
-    except ValueError as error:
-        parser.error(str(error))
-    evaluator = None
-    if args.model == "timesfm":
-        evaluator = load_evaluator(args.device, args.checkpoint)
-    predictions, past_error = predict(sample[:HISTORY], evaluator)
-    output = ROOT / "outputs" / f"{args.model}-{args.device}" / f"window-{args.window:02d}"
-    save_result(sample, predictions, past_error, args.window, output, args.device)
+    sample = select_window(data, args.window)
+    evaluator = load_evaluator(args.device, args.checkpoint) if args.model == "timesfm" else None
+    predictions, details = predict(sample[:HISTORY], evaluator, args.gravity)
+    output = ROOT / "outputs" / f"li2025-{args.gravity}-{args.model}-{args.device}" / f"window-{args.window:02d}"
+    save_result(sample, predictions, details, args.window, output, args.device)
     print(f"结果：{output}")
 
 

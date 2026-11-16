@@ -1,69 +1,80 @@
-# 数据、坐标与实验约定
+# 数据、动力学与评价约定
 
-## 数据来自哪里
+## 参考数据
 
-使用 NASA/JPL **GRACE-FO Level-1B RL04** 的 **GNV1B** C 星产品，原始数据的产品 DOI 为 [10.5067/GFJPL-L1B04](https://doi.org/10.5067/GFJPL-L1B04)。ASCII 集合入口：[PO.DAAC GRACEFO_L1B_ASCII_GRAV_JPL_RL04](https://podaac.jpl.nasa.gov/dataset/GRACEFO_L1B_ASCII_GRAV_JPL_RL04)。
+使用 NASA/JPL **GRACE-FO Level-1B RL04** 的 **GNV1B** C 星产品。产品 DOI：[10.5067/GFJPL-L1B04](https://doi.org/10.5067/GFJPL-L1B04)；
+[PO.DAAC 集合入口](https://podaac.jpl.nasa.gov/dataset/GRACEFO_L1B_ASCII_GRAV_JPL_RL04)。
 
-原始文件为 `GNV1B_2025-06-01_C_04.txt`、`GNV1B_2025-06-02_C_04.txt`、`GNV1B_2025-06-03_C_04.txt`。本仓库只附带逐分钟的小样本，不要求学生下载完整日文件。官方格式见 [GRACE-FO Level-1 数据手册](https://isdc-data.gfz.de/grace-fo/DOCUMENTS/Level-1/GRACE-FO_L1_Data_Product_User_Handbook_20190911.pdf)。
+原始文件为 GNV1B_2025-06-01_C_04.txt、GNV1B_2025-06-02_C_04.txt、GNV1B_2025-06-03_C_04.txt。
+仓库附带 4,320 个逐分钟位置、速度样本，不需要学生登录数据网站。
+格式依据 [GRACE-FO Level-1 数据手册](https://isdc-data.gfz.de/grace-fo/DOCUMENTS/Level-1/GRACE-FO_L1_Data_Product_User_Handbook_20190911.pdf)。
 
-这里的位置和速度是 **GPS 定轨得到的后处理轨道产品**，不是原始 GPS 观测量。后处理产品回放不等于实时系统测试；本例未模拟产品发布延迟，也未重新解算定轨。
+[advanced/prepare_data.py](advanced/prepare_data.py) 读取 GPS 秒、ECEF 位置和速度，只保留整分钟且质量标志为零的记录；不插值、平均或拟合。
+数据及原文件 SHA-256 见 [data/orbit.manifest.json](data/orbit.manifest.json)。
 
-## 提取方式
+这是真实观测解算得到的后处理精密轨道产品，不是原始 GNSS 观测。本例未重新定轨，也未模拟产品的发布延迟。
 
-[advanced/prepare_data.py](advanced/prepare_data.py) 跳过 YAML 头，读取官方 16 列文本：
+## 时间、窗口和输入边界
 
-| 内容 | 原文件列（从 1 开始） |
-|---|---|
-| GPS 秒 | 1 |
-| 卫星 C / 坐标 E | 2 / 3 |
-| XYZ 位置（m） | 4–6 |
-| XYZ 速度（m/s） | 10–12 |
-| 二进制质量标志 | 16 |
+- 时间是从 2000-01-01 12:00:00 GPS 起的连续秒，不是 UTC。
+- 起报时刻固定为 2025-06-02、03 日每天 00、06、12、18 时，共八个窗口，不按结果选择。
+- 位置和速度都在 ECEF，单位为 m、m/s。
+- 总历史为 -500 到 0 min，共 501 点。
+- 动力学拟合只使用 -500 到 -20 min，共 481 点，跨度 8 h。
+- 预热为 -19 到 0 min，共 20 点；不参与上述动力学拟合。
+- TimesFM 输入为 -359 到 0 min，共 360 点。
+- 未来为 +1 到 +60 min，共 60 点，预测完成后才用于评分。
+- 最新历史动力学对照重新拟合 -480 到 0 min，使用与其他方法一样已经可用的历史范围。
 
-只保留 GPS 秒能被 60 整除、质量标志等于 0 的记录；不平均、不拟合、不插值。当前样本为 4,320 点，没有因标志丢掉抽样点。原文件与抽样 CSV 的 SHA-256 保存在 [data/orbit.manifest.json](data/orbit.manifest.json)。
+模型在历史段估计参数；预热和未来使用同一组参数连续积分，起报点不重置状态。未来坐标变换也由动力学预测状态建立。
 
-如已有官方文件，可重建：
+## 动力学
 
-```bash
-python advanced/prepare_data.py data/raw/GNV1B_2025-06-01_C_04.txt data/raw/GNV1B_2025-06-02_C_04.txt data/raw/GNV1B_2025-06-03_C_04.txt
-```
+默认采用 **EGM2008 120 阶/次静态重力场 + 地球匀速自转 + 经验加速度**。
+EGM2008 原始文献：[Pavlis 等，2012](https://doi.org/10.1029/2011JB008916)。
+附带系数来自 [Brahe 固定提交的 EGM2008_120.gfc](https://github.com/duncaneddy/brahe/blob/a5d8988955d477b92453eaf6e565ec64541fcdbf/data/gravity_models/EGM2008_120.gfc)，
+来源及 SHA-256 见 [data/gravity.manifest.json](data/gravity.manifest.json)。原始全球模型由 NGA 发布，可通过 [ICGEM](https://icgem.gfz.de/tom_longtime) 获取。
 
-下载完整官方产品可能需要 NASA Earthdata 登录。保留 NASA/JPL 数据来源，引用遵循 [PO.DAAC 引用说明](https://podaac.jpl.nasa.gov/CitingPODAAC)。
+系数为完全归一化、tide-free。计算使用文件对应 GM=3.986004415e14 m³/s²、半径=6378136.3 m。
+[gravity.py](gravity.py) 实现归一化球谐递推和势函数梯度；Numba 只负责加速数值计算。
 
-## 时间和坐标
+经验加速度有五个系数：沿轨常数项、沿轨一次/圈正余弦项、法向一次/圈正余弦项。
+与初始六维状态一起，通过历史位置的最小二乘拟合估计。
+沿轨常数项只是吸收部分未建模受力，不能称为物理大气阻力模型或论文中的 Cd 参数。
 
-- `gps_seconds` 是从 **2000-01-01 12:00:00 GPS** 起的连续秒，与原始文件头一致。不是 UTC，也不是接收机钟时间。
-- `x_m,y_m,z_m` 为 **ECEF 地固坐标**，`vx_m_s,vy_m_s,vz_m_s` 为同一地固系中的速度。
-- 8 个起报时刻按 GPS 时间定义；代码直接使用连续秒，不做不必要的 UTC 转换。
-- 360 个历史点覆盖 `(-6 h, 0]`：从 -359 min 到 0 min。目标为 +1 到 +60 min，共 60 点。
+[rdop.py](rdop.py) 使用 DOP853 积分，最大步长 60 s，rtol=2e-12，atol=1e-7。
+ECEF 中加入科里奥利和离心项；自转角速度取 7.292115e-5 rad/s。
+沿轨/法向基由位置与惯性速度方向建立，后者为 ECEF 速度加 Ω×r。
 
-## 简化动力学
+仍未实现日月引力、潮汐、物理大气密度与阻力、太阳辐射压、极移或精密 EOP。
+因此本例保留“简化动力学”的标识，不能称作论文完整 RDOP 的复现。
+也可通过 --gravity j2 运行低阶引力对照。J2 常数见 [IERS 常数表](https://hpiers.obspm.fr/eop-pc/models/constants.html)。
 
-[orbit.py](orbit.py) 实现中心引力、可选 J2 和 RK4 积分，内部步长 5 s，输出间隔 60 s。ECEF 是旋转坐标系，必须加入：
+## TimesFM
 
-```text
-a_ECEF = a_gravity - 2 Ω×v - Ω×(Ω×r)
-```
+[google/timesfm-3.0-pytorch](https://huggingface.co/google/timesfm-3.0-pytorch)，没有微调。
+上游源码提交固定到 e51928e27119cb17bebc005be2696b75e0a9e688，
+权重 revision 固定到 43046b85ec22d584a13f8098c2ed39c889e129c2。
 
-地球旋转角速度取 7.292115e-5 rad/s，GM=3.986004418e14 m³/s²，赤道半径=6378136.6 m，J2=1.0826359e-3。常数参考 [IERS 常数表](https://hpiers.obspm.fr/eop-pc/models/constants.html)。
+输入为参考减动力学的 S/W/R 误差。三个分量分别在 float64 中减末值，然后转 float32，以米输入。
+预测后加回末值，再由未来动力学基变换回 ECEF，加到同一条动力学轨道上。
+不使用未来参考调尺度、去趋势、选窗口或选择模型；官方内部归一化与去趋势保持默认。
 
-没有计算完整地球重力场、阻力、日月引力、太阳辐射压、极移或精密 EOP。该模型用于教学，精度不能等同于完整轨道预报软件。测试中的厘米级解析解吻合只说明数值积分正确，**不是实际预报精度**。
+模型输入只有误差序列。Li 等的模型还使用位置、速度作为特征，并针对轨道误差专门训练，这两种学习方式并不相同。
 
-## TimesFM 与评分
+## 评分和论文对照
 
-官方模型 [google/timesfm-3.0-pytorch](https://huggingface.co/google/timesfm-3.0-pytorch)，未微调。源码固定到 `e51928e27119cb17bebc005be2696b75e0a9e688`；权重固定到 `43046b85ec22d584a13f8098c2ed39c889e129c2`。
+**逐预报时刻的三维 RMSE**：对八个窗口在同一预报分钟的三维误差平方求均值，再开方。
+该指标用于与论文 Table 5 的 10/20/30/60 min 对比。
+**整段 RMS**：对所有窗口、所有 60 个未来点的误差平方统一求均值，再开方。
 
-两个分支共享同一个原始模型，没有训练或微调：
+同时保存逐窗口成绩、逐点预测坐标、历史误差、拟合参数和源代码哈希，不能只凭曲线是否重合判断精度。
+[Li 等（2025）](https://doi.org/10.1007/s00190-025-01999-7) 使用 2019 年全年数据、更完整的动力学和专门训练的 GRU Seq2Seq。
+本例使用 2025 年两天的八个预报窗口与原始 TimesFM，是小样本方法演示，绝对精度不是同条件算法排名。
 
-- 直接预测：XYZ 独立输入，在 float64 中减末值，从 m 转 km，再转 float32；输出还原为 m。
-- 误差预测：先从历史末点状态用 J2 回算 -1 至 -359 min，倒序后加上起报点，计算 `GNV1B - J2`。三个误差分量减末值后以 m 输入，预测结果加回未来 J2 位置。
+## 许可与引用
 
-正向与反向使用同一 J2 动力学、同一起报状态和 5 s RK4 步长。因此起报点历史误差为零，没有将“六小时前初始化的误差”错误地加到“起报时重置的新轨道”上。回算会使用历史末点的已知状态，但绝不使用起报后的 GNV1B；这属于起报时可进行的历史残差构造。
-
-物理模型使用末点位置速度；TimesFM 直接分支只使用历史位置；混合分支还使用物理模型和历史误差。因此这是工程方法比较，不是相同输入特征的纯网络排名。官方内部归一化与去趋势保持默认，不按未来误差调参。
-
-预测函数只接受 360 点历史。未来 60 点只在输出完成后评分。保存 `history.csv` 供检查残差来源；`prediction.csv` 保存预测坐标；全部窗口等长，合并 RMS 为各窗口 RMS 平方均值的平方根。
-
-本次 CPU/GPU 均重新运行全部八个窗口，含失败窗口。旧版只有三个方法的归档已被本次四方法结果替换，旧结果仍可通过 Git 历史查看。
-
-MIT 只适用于自编代码；原始数据、依赖和模型有各自许可。TimesFM 权重不随仓库发布。
+自编代码适用 MIT；NASA/JPL 数据、NGA 重力场系数和 TimesFM 权重遵循各自规则。
+保留数据与模型来源，参见 [PO.DAAC 引用说明](https://podaac.jpl.nasa.gov/CitingPODAAC)。
+仓库不分发模型权重或论文 PDF。TimesFM 3.0 用于非商业、非生产教学研究，详见
+[官方模型许可](https://huggingface.co/google/timesfm-3.0-pytorch/blob/main/LICENSE)。
