@@ -1,0 +1,25 @@
+{
+  "object": "GRACE-FO C",
+  "product": "GNV1B RL04",
+  "product_doi": "10.5067/GFJPL-L1B04",
+  "frame": "Earth-fixed ECEF",
+  "time": "GPS seconds since 2000-01-01 12:00:00 GPS; not UTC or receiver time",
+  "source_files": [
+    {
+      "file": "GNV1B_2025-06-01_C_04.txt",
+      "sha256": "018bfec95c6a3e177208dc88ff0cf38bb6c18ac8e1e40732c8fc4c6816f509c2"
+    },
+    {
+      "file": "GNV1B_2025-06-02_C_04.txt",
+      "sha256": "c1647af42bfd7e185e1c560854d4760ae357cf1194f02c4017576cb52fd183e4"
+    },
+    {
+      "file": "GNV1B_2025-06-03_C_04.txt",
+      "sha256": "e8861534d2c9d54dbe3c2bee76f5da2fd74af20529353602f2822ec28f842b6a"
+    }
+  ],
+  "selection": "Exact epochs divisible by 60, quality flag == 0; no interpolation or fitting",
+  "sampled_nonzero_quality_removed": 0,
+  "rows": 4320,
+  "output_sha256": "665c25824dbf3ba8d4d0ae7e6b7bea60b0ab697bf1b901dcabc332c77322e320"
+}
