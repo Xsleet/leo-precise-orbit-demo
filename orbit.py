@@ -29,13 +29,13 @@ def derivative(state, use_j2, rotating):
 
 
 def propagate(initial_state, points=60, interval=60., use_j2=True, rotating=False, max_step=5.):
-    """仅从起报时刻的位置/速度向后传播；第一行对应 +interval，不是 t=0。"""
+    """从给定状态传播；负 interval 回算历史，正 interval 预报，均不含 t=0。"""
     state = np.asarray(initial_state, dtype=np.float64).copy()
     if state.shape != (6,) or not np.isfinite(state).all() or np.linalg.norm(state[:3]) < R_EARTH:
         raise ValueError("需要地表以上、有限的六维位置速度状态")
-    if points < 1 or interval <= 0 or max_step <= 0:
-        raise ValueError("点数、采样间隔和积分步长必须为正")
-    steps = int(np.ceil(interval / max_step))
+    if points < 1 or interval == 0 or max_step <= 0:
+        raise ValueError("点数、积分步长必须为正，采样间隔不能为零")
+    steps = int(np.ceil(abs(interval) / max_step))
     h = interval / steps
     result = []
     for _ in range(points):

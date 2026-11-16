@@ -45,6 +45,16 @@ class PhysicsTests(unittest.TestCase):
         self.assertLess(np.max(np.linalg.norm(rotating[:, :3] - finer[:, :3], axis=1)), .02)
 
 
+    def test_j2_backward_arc_returns_to_origin(self):
+        initial = np.array([7e6, 0, 0, 0, 6500, 3800.])
+        back = propagate(initial, points=359, interval=-60, rotating=True)
+        recovered = propagate(back[-1], points=359, interval=60, rotating=True)[-1]
+        self.assertLess(np.linalg.norm(recovered[:3] - initial[:3]), .05)
+        self.assertLess(np.linalg.norm(recovered[3:] - initial[3:]), .0001)
+        with self.assertRaises(ValueError):
+            propagate(initial, interval=0)
+
+
 class DataTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -67,16 +77,24 @@ class DataTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             demo.select_window(sample[::-1], 1)
 
-    def test_timesfm_receives_only_past_positions_in_km(self):
+    def test_timesfm_inputs_and_additive_correction(self):
         sample = demo.select_window(self.data, 1)
+        inputs_seen = []
         class Evaluator:
             def predict_batch(self, inputs, **kwargs):
-                np.testing.assert_allclose(inputs, ((sample[:360, 1:4] - sample[359, 1:4])/1000).T,
-                                           rtol=1e-6, atol=1e-4)
+                inputs_seen.append(np.array(inputs))
                 assert kwargs["horizon"] == 60
                 return [SimpleNamespace(forecast=np.full(60, 2.)) for _ in range(3)]
-        result = demo.predict(sample[:360], Evaluator())
+        result, residual = demo.predict(sample[:360], Evaluator())
+        self.assertEqual(len(inputs_seen), 2)
+        np.testing.assert_allclose(inputs_seen[0], ((sample[:360, 1:4] - sample[359, 1:4])/1000).T,
+                                   rtol=1e-6, atol=1e-4)
+        np.testing.assert_allclose(inputs_seen[1], (residual - residual[-1]).T, rtol=1e-6, atol=1e-4)
         np.testing.assert_allclose(result["timesfm"], np.tile(sample[359, 1:4] + 2000, (60, 1)))
+        np.testing.assert_allclose(result[demo.HYBRID] - result[demo.BASE],
+                                   np.tile(residual[-1] + 2, (60, 1)), atol=1e-8)
+        with self.assertRaises(ValueError):
+            demo.predict(sample, Evaluator())  # 禁止把含未来参考的 420 点传进预测函数。
 
     def test_archived_metrics_from_xyz_not_plot(self):
         for device in ("cpu", "gpu"):
@@ -90,7 +108,9 @@ class DataTests(unittest.TestCase):
                 reference = np.column_stack([pred[f"reference_{axis}_m"] for axis in "xyz"])
                 np.testing.assert_array_equal(reference, sample[360:, 1:4])
                 with (output / "metrics.csv").open(encoding="utf-8", newline="") as stream:
-                    for row in csv.DictReader(stream):
+                    rows = list(csv.DictReader(stream))
+                    self.assertEqual({r["model"] for r in rows}, {"two_body", "j2", "timesfm", demo.HYBRID})
+                    for row in rows:
                         model = row["model"]
                         xyz = np.column_stack([pred[f"{model}_{axis}_m"] for axis in "xyz"])
                         error = np.sqrt(np.sum((xyz - reference)**2, axis=1))
@@ -99,8 +119,14 @@ class DataTests(unittest.TestCase):
                         self.assertAlmostEqual(rms, float(row["rms_3d_m"]), places=6)
                         self.assertAlmostEqual(error[-1], float(row["endpoint_3d_m"]), places=6)
                         rms_values.setdefault(model, []).append(rms)
+                past = np.genfromtxt(output / "history.csv", delimiter=",", names=True)
+                np.testing.assert_array_equal(past["time_seconds"], sample[:360, 0])
+                for axis, col in zip("xyz", (1, 2, 3)):
+                    np.testing.assert_array_equal(past[f"reference_{axis}_m"], sample[:360, col])
+                    np.testing.assert_allclose(past[f"reference_{axis}_m"] - past[f"baseline_{axis}_m"],
+                                               past[f"residual_{axis}_m"], atol=1e-8)
                 if number == 1:
-                    physics = demo.predict(sample[:360])
+                    physics, residual = demo.predict(sample[:360])
                     for model, xyz in physics.items():
                         archived = np.column_stack([pred[f"{model}_{axis}_m"] for axis in "xyz"])
                         np.testing.assert_allclose(xyz, archived, atol=.001, rtol=0)
