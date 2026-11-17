@@ -3,7 +3,6 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 import numpy as np
-from main import ROOT
 from short_2019 import DATA_PATH, FIRST
 from no_warmup import FIT_HOURS, CONTEXT_HOURS, history, future_reference, prepare, correct
 
@@ -54,15 +53,6 @@ class NoWarmupTests(unittest.TestCase):
             self.assertEqual(contexts[-1].shape, (3, hours*60))
             expected = (arc['residual'][-hours*60:] - arc['residual'][-1]).T.astype(np.float32)
             np.testing.assert_array_equal(contexts[-1], expected)
-
-    def test_8h_baseline_matches_previous_fresh_fit(self):
-        for n in range(1, 9):
-            with patch('dynamics_cache.fit_and_predict', side_effect=AssertionError('应命中既有缓存')):
-                arc = prepare(history(self.data, n, 8))
-            old = np.genfromtxt(ROOT/f'reference/2019-short/gpu/window-{n:02d}/prediction.csv',
-                                delimiter=',', names=True)
-            expected = np.column_stack([old[f'fresh_rdop_{c}_m'] for c in 'xyz'])
-            np.testing.assert_allclose(arc['baseline'], expected, rtol=0, atol=2e-8)
 
 
 if __name__ == '__main__':

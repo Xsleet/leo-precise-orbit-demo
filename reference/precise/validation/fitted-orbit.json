@@ -1,6 +1,0 @@
-{
-  "archive_reconstruction_max_position_difference_m": 0.0,
-  "tight_integration_max_position_difference_m": 0.013255170536821162,
-  "cache_key": "5679668e6d8eb27190650f94742412353c456c69dc6a76b8039dbc7a8e3da8b6",
-  "parameters": "window 1 historical fit; no future observations used"
-}

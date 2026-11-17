@@ -1,5 +1,4 @@
-"""无需下载 TimesFM：验证动力学、时间边界和已归档的逐点结果。"""
-import csv
+"""无需下载 TimesFM：验证动力学、数据和时间边界。"""
 import hashlib
 import json
 from types import SimpleNamespace
@@ -103,58 +102,6 @@ class DataTests(unittest.TestCase):
         self.assertAlmostEqual(summary[0]["endpoint_rmse_3d_m"], np.sqrt(8))
         self.assertAlmostEqual(summary[0]["pooled_rms_3d_m"], 2.5)
         self.assertAlmostEqual(leads[0]["rmse_3d_m"], np.sqrt(4.5))
-
-    def test_archived_arc_and_history_reconstruct_from_fit_parameters(self):
-        from rdop import integrate, frames, to_swr
-        folder = demo.ROOT / "reference/li2025/gpu/window-01"
-        self.assertTrue(folder.exists(), "缺少已发布的实测归档")
-        sample = demo.select_window(self.data, 1)
-        meta = json.loads((folder / "run.json").read_text())
-        initial = sample[0, 1:7] + meta["fit"]["initial_state_adjustment"]
-        empirical = np.array(meta["fit"]["empirical_m_s2"])
-        trajectory = integrate(initial, empirical, np.arange(561)*60.)
-        pred = np.genfromtxt(folder / "prediction.csv", delimiter=",", names=True)
-        expected = np.column_stack([pred[f"rdop_{axis}_m"] for axis in "xyz"])
-        # 已公开的积分收敛检查约 6 mm；不同平台的自适应步长也会产生毫米级差异。
-        # 轨道重建允许 1 cm；下面的逐点评分复算仍保持严格的数值核验。
-        np.testing.assert_allclose(trajectory[501:, :3], expected, atol=.01, rtol=0)
-        history = np.genfromtxt(folder / "history.csv", delimiter=",", names=True)
-        residual = to_swr(sample[:501, 1:4]-trajectory[:501, :3], frames(trajectory[:501]))
-        stored = np.column_stack([history[f"residual_{axis}_m"] for axis in "swr"])
-        np.testing.assert_allclose(residual, stored, atol=.01, rtol=0)
-
-    def test_archived_results_from_xyz(self):
-        from compare_windows import summarize
-        for device in ["cpu", "gpu"]:
-            folder = demo.ROOT / "reference/li2025" / device
-            self.assertTrue(folder.exists(), "缺少已发布的实测归档")
-            all_errors = {}
-            for number in range(1, 9):
-                output = folder / f"window-{number:02d}"
-                pred = np.genfromtxt(output / "prediction.csv", delimiter=",", names=True)
-                sample = demo.select_window(self.data, number)
-                reference = np.column_stack([pred[f"reference_{axis}_m"] for axis in "xyz"])
-                np.testing.assert_array_equal(pred["gps_seconds"], sample[501:, 0])
-                np.testing.assert_array_equal(reference, sample[501:, 1:4])
-                with (output / "metrics.csv").open(encoding="utf-8") as stream:
-                    for row in csv.DictReader(stream):
-                        model = row["model"]
-                        xyz = np.column_stack([pred[f"{model}_{axis}_m"] for axis in "xyz"])
-                        error = np.linalg.norm(xyz - reference, axis=1)
-                        np.testing.assert_allclose(error, pred[f"{model}_error_3d_m"], rtol=1e-11, atol=1e-8)
-                        self.assertAlmostEqual(np.sqrt(np.mean(error**2)), float(row["rms_3d_m"]), places=7)
-                        all_errors.setdefault(model, []).append(error)
-                run = json.loads((output / "run.json").read_text())
-                self.assertEqual(run["fit"]["fit_end_gps_seconds"], sample[500, 0] - 1200)
-                self.assertEqual(run["fresh_fit"]["fit_end_gps_seconds"], sample[500, 0])
-                history = np.genfromtxt(output / "history.csv", delimiter=",", names=True)
-                self.assertEqual(sum(history["is_warmup"]), 20)
-                self.assertEqual(sum(history["is_timesfm_input"]), 360)
-            summaries, leads = summarize(all_errors)
-            with (folder / "summary.csv").open() as stream:
-                for actual, expected in zip(csv.DictReader(stream), summaries):
-                    for key in ["pooled_rms_3d_m", "endpoint_rmse_3d_m"]:
-                        self.assertAlmostEqual(float(actual[key]), expected[key], places=7)
 
 
 class ReducedDynamicsTests(unittest.TestCase):

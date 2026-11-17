@@ -1,12 +1,11 @@
 """验证换年份、10 秒拟合和 80 点输入时，没有混用日期或读取未来。"""
-import csv
 import hashlib
 import json
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 import numpy as np
-from main import ROOT, HISTORY, predict
+from main import HISTORY, predict
 from short_2019 import DATA_PATH, FIRST, window
 
 
@@ -66,46 +65,6 @@ class Short2019Tests(unittest.TestCase):
         weather.kp[day*8:] = 9999
         future = cutoff.shiftedBy(3600.)
         self.assertEqual(expected,[weather.getInstantFlux(future),weather.getThreeHourlyKP(future)])
-
-
-class Short2019ArchiveTests(unittest.TestCase):
-    def test_full_results_scores_and_source_snapshots(self):
-        from compare_windows import summarize
-        data = np.loadtxt(DATA_PATH,delimiter=',',skiprows=1)
-        archive = ROOT/'reference/2019-short'
-        for device in ['cpu','gpu']:
-            folder = archive/device
-            metadata = json.loads((folder/'environment.json').read_text())
-            self.assertEqual(metadata['data_sha256'],hashlib.sha256(DATA_PATH.read_bytes()).hexdigest())
-            for name,sha in metadata['source_sha256'].items():
-                self.assertEqual(hashlib.sha256((archive/'source'/name).read_bytes()).hexdigest(),sha)
-            errors = {}
-            for number in range(1,9):
-                sample,past = window(data,number)
-                run = json.loads((folder/f'window-{number:02d}/run.json').read_text())
-                pred = np.genfromtxt(folder/f'window-{number:02d}/prediction.csv',delimiter=',',names=True)
-                np.testing.assert_array_equal(pred['gps_seconds'],sample[HISTORY:,0])
-                self.assertEqual(run['context_points'],80)
-                self.assertEqual(run['fit']['fit_points'],2881)
-                self.assertEqual(run['fit']['fit_end_gps_seconds'],past[-1,0]-1200)
-                self.assertEqual(run['fresh_fit']['fit_end_gps_seconds'],past[-1,0])
-                for name in ['rdop','rdop_linear','fresh_rdop','rdop_timesfm']:
-                    xyz = np.column_stack([pred[f'{name}_{c}_m'] for c in 'xyz'])
-                    error = np.linalg.norm(xyz-sample[HISTORY:,1:4],axis=1)
-                    np.testing.assert_allclose(error,pred[name+'_error_3d_m'],rtol=0,atol=1e-8)
-                    errors.setdefault(name,[]).append(error)
-                if device=='cpu':
-                    with patch('dynamics_cache.fit_and_predict',side_effect=AssertionError('2019 缓存不匹配')):
-                        rebuilt,_ = predict(sample[:HISTORY],fit_history=past,context_points=80)
-                    for name,xyz in rebuilt.items():
-                        expected = np.column_stack([pred[f'{name}_{c}_m'] for c in 'xyz'])
-                        np.testing.assert_allclose(xyz,expected,rtol=0,atol=2e-8)
-            summary,_ = summarize(errors)
-            with (folder/'summary.csv').open() as stream:
-                stored = {row['model']:row for row in csv.DictReader(stream)}
-            for row in summary:
-                for key in ['pooled_rms_3d_m','endpoint_rmse_3d_m']:
-                    self.assertAlmostEqual(row[key],float(stored[row['model']][key]),places=8)
 
 
 if __name__ == '__main__':

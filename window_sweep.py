@@ -10,7 +10,7 @@ import time
 import numpy as np
 from main import ROOT, MODEL_ID, REVISION, load_evaluator
 from short_2019 import DATA_PATH
-from no_warmup import DEFAULT_FIT_HOURS, FIT_HOURS, CONTEXT_HOURS
+from no_warmup import FIT_HOURS, CONTEXT_HOURS
 from no_warmup import history, future_reference, prepare, correct, prefit, save_arc, fingerprint
 from plotting import write_csv
 from compare_windows import summarize
@@ -21,7 +21,7 @@ def run():
     parser.add_argument('--device',choices=['cpu','gpu'],default='cpu')
     parser.add_argument('--model',choices=['physics','timesfm'],default='timesfm')
     parser.add_argument('--checkpoint',default=MODEL_ID)
-    parser.add_argument('--fit-hours',type=int,nargs='+',choices=FIT_HOURS,default=list(DEFAULT_FIT_HOURS))
+    parser.add_argument('--fit-hours',type=int,nargs='+',choices=FIT_HOURS,default=list(FIT_HOURS))
     parser.add_argument('--context-hours',type=int,nargs='+',choices=CONTEXT_HOURS,default=list(CONTEXT_HOURS))
     parser.add_argument('--workers',type=int,choices=range(1,17),default=1)
     parser.add_argument('--threads',type=int,default=4,help='TimesFM 使用的 CPU 线程数')

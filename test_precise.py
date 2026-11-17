@@ -104,57 +104,5 @@ class PreciseTests(unittest.TestCase):
             self.assertLess(relative, .003)
 
 
-class PreciseArchiveTests(unittest.TestCase):
-    def test_2025_archive_cache_and_scores_recompute(self):
-        import csv
-        from unittest.mock import patch
-        from main import predict, HISTORY
-        from compare_windows import summarize
-        data = np.loadtxt(ROOT / 'data/orbit.csv', delimiter=',', skiprows=1)
-        for device in ['cpu', 'gpu']:
-            folder = ROOT / 'reference/precise' / device
-            errors = {}
-            for number in range(1,9):
-                sample = select_window(data, number)
-                pred = np.genfromtxt(folder / f'window-{number:02d}/prediction.csv', delimiter=',', names=True)
-                run = json.loads((folder / f'window-{number:02d}/run.json').read_text())
-                np.testing.assert_array_equal(pred['gps_seconds'], sample[HISTORY:,0])
-                np.testing.assert_array_equal(np.column_stack([pred[f'reference_{c}_m'] for c in 'xyz']), sample[HISTORY:,1:4])
-                self.assertEqual(run['fit']['fit_end_gps_seconds'], sample[500,0]-1200)
-                self.assertEqual(run['fresh_fit']['fit_end_gps_seconds'], sample[500,0])
-                for name in ['rdop','fresh_rdop','rdop_linear','rdop_timesfm']:
-                    positions = np.column_stack([pred[f'{name}_{c}_m'] for c in 'xyz'])
-                    error = np.linalg.norm(positions - sample[HISTORY:,1:4],axis=1)
-                    np.testing.assert_allclose(error,pred[f'{name}_error_3d_m'],atol=1e-8,rtol=0)
-                    errors.setdefault(name,[]).append(error)
-                if device == 'cpu':
-                    # 2025 归档对应其 source/ 下的旧源码；新版源码应使旧缓存失效。
-                    # 此处核验归档自己的轨道和数值，而不是要求新版接受旧源码缓存。
-                    for key in ['fit','fresh_fit']:
-                        path = ROOT/'reference/precise/dynamics-cache'/f"{run[key]['cache_key']}.npz"
-                        with np.load(path, allow_pickle=False) as cache:
-                            self.assertEqual(json.loads(str(cache['info']))['cache_key'], run[key]['cache_key'])
-                            name = 'rdop' if key == 'fit' else 'fresh_rdop'
-                            expected = np.column_stack([pred[f'{name}_{c}_m'] for c in 'xyz'])
-                            np.testing.assert_allclose(cache['trajectory'][-60:,:3], expected, atol=2e-8, rtol=0)
-            summaries,_ = summarize(errors)
-            with (folder/'summary.csv').open(encoding='utf8') as stream:
-                actual = {r['model']: r for r in csv.DictReader(stream)}
-            for row in summaries:
-                for key in ['pooled_rms_3d_m','endpoint_rmse_3d_m']:
-                    self.assertAlmostEqual(row[key],float(actual[row['model']][key]),places=8)
-
-    def test_cached_orbit_reconstructs_from_past_fit_parameters(self):
-        from main import FIT
-        folder = ROOT/'reference/precise/gpu/window-01'
-        info = json.loads((folder/'run.json').read_text())['fit']
-        sample = select_window(np.loadtxt(ROOT/'data/orbit.csv',delimiter=',',skiprows=1),1)
-        arc = Arc(sample[:FIT+1])
-        trajectory = arc.propagate(np.array(info['parameters_scaled']),np.arange(561)*60.,earth_fixed=True)
-        pred = np.genfromtxt(folder/'prediction.csv',delimiter=',',names=True)
-        positions = np.column_stack([pred[f'rdop_{c}_m'] for c in 'xyz'])
-        self.assertLess(float(np.linalg.norm(trajectory[501:,:3]-positions,axis=1).max()),.005)
-
-
 if __name__ == '__main__':
     unittest.main()

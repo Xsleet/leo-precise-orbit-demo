@@ -10,8 +10,7 @@ from rdop import frames, to_swr, to_xyz
 from short_2019 import FIRST, DATA_PATH
 from dynamics_cache import fit_cached
 
-DEFAULT_FIT_HOURS = (8, 12, 24)
-FIT_HOURS = (2, 4, 6, *DEFAULT_FIT_HOURS)
+FIT_HOURS = (1, 2, 4, 6, 8, 12, 24)
 CONTEXT_HOURS = (1, 2, 4, 6, 8)
 
 
