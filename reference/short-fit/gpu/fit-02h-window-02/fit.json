@@ -1,0 +1,52 @@
+{
+  "gravity": "EGM2008 150x150 / Orekit",
+  "fit_start_gps_seconds": 599655600.0,
+  "fit_end_gps_seconds": 599662800.0,
+  "fit_points": 721,
+  "observation_step_seconds": 10.0,
+  "fit_rms_3d_m": 0.00806048276337807,
+  "empirical_m_s2": [
+    2.2699182671762683e-09,
+    -7.081046176858007e-09,
+    -2.4064863422183214e-08,
+    -3.0236568439068e-08
+  ],
+  "drag_factors": [
+    1.3368144006844203
+  ],
+  "drag_segment_start_gps_seconds": [
+    599655600.0
+  ],
+  "drag_period_seconds": 5660.7186417553,
+  "initial_state_adjustment": [
+    -0.004548205072544272,
+    0.002777465990280116,
+    -0.009631090761421351,
+    -1.3476989149517417e-05,
+    -1.815571010381901e-05,
+    1.8500987494277774e-05
+  ],
+  "initial_state_frame": "GCRF",
+  "nominal_mass_kg": 601.214,
+  "parameters_scaled": [
+    -0.004548205072544272,
+    0.002777465990280116,
+    -0.009631090761421351,
+    -0.013476989149517418,
+    -0.018155710103819007,
+    0.018500987494277775,
+    0.022699182671762685,
+    -0.07081046176858008,
+    -0.24064863422183216,
+    -0.30236568439068,
+    3.368144006844202
+  ],
+  "solver_status": 3,
+  "function_evaluations": 8,
+  "linearizations": 2,
+  "jacobian": "Orekit variational equations",
+  "optimality": 0.07704895338118092,
+  "model": "DE405; IERS2010 solid/pole tides; EOT11a 18 waves; DTM2000; 8-panel SRP; 1PR S/W; relativity",
+  "cache_key": "046606fc5b000d2b43bd94954dd1bf46774987824b57f3481496406aba4ce50d",
+  "cache_origin": "outputs\\dynamics-cache\\046606fc5b000d2b43bd94954dd1bf46774987824b57f3481496406aba4ce50d.npz"
+}

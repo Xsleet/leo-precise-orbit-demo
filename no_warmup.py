@@ -10,7 +10,8 @@ from rdop import frames, to_swr, to_xyz
 from short_2019 import FIRST, DATA_PATH
 from dynamics_cache import fit_cached
 
-FIT_HOURS = (8, 12, 24)
+DEFAULT_FIT_HOURS = (8, 12, 24)
+FIT_HOURS = (2, 4, 6, *DEFAULT_FIT_HOURS)
 CONTEXT_HOURS = (1, 2, 4, 6, 8)
 
 
@@ -25,7 +26,7 @@ def grid(data, first, last, step):
 
 def history(data, number, fit_hours):
     if number not in range(1, 9) or fit_hours not in FIT_HOURS:
-        raise ValueError('使用预先固定的八个窗口及 8/12/24 h 拟合长度')
+        raise ValueError(f'使用八个固定窗口及以下拟合长度（h）：{FIT_HOURS}')
     origin = FIRST + (number - 1) * 3600
     return grid(data, origin - fit_hours * 3600, origin, 10)
 
@@ -37,12 +38,12 @@ def future_reference(data, number):
 
 def prepare(past, recompute=False):
     """只接收历史；返回未来动力学位置和历史残差，不接收未来参考值。"""
-    if (past.ndim != 2 or past.shape[1] != 7 or not np.isfinite(past).all()
+    if (past.ndim != 2 or past.shape[1] != 7 or len(past) < 2 or not np.isfinite(past).all()
             or not np.all(np.diff(past[:, 0]) == 10)):
         raise ValueError('需要连续、有限的 10 s 历史位置速度数据')
     span = (past[-1, 0] - past[0, 0]) / 3600
     if span not in FIT_HOURS:
-        raise ValueError('历史长度必须为 8/12/24 h')
+        raise ValueError(f'拟合长度（h）须为 {FIT_HOURS} 之一')
     trajectory, fit = fit_cached(past, 60, recompute=recompute)
     observed = past[::6]
     basis = frames(trajectory)

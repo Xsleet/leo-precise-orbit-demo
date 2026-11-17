@@ -9,6 +9,7 @@ TimesFM 使用原始 3.0 权重，没有微调。
 **当前入口是无预热的窗口长度实验：** 2019 年 1 月 2 日 00–07 时，每小时起报，共八个窗口。
 比较 **8/12/24 h 动力学拟合 × 1/2/4/6/8 h TimesFM 输入**，同时实测 CPU/GPU 速度。
 完整成绩见 **[RESULTS_WINDOWS.md](RESULTS_WINDOWS.md)**。这是一组短期探索实验，最优组合尚未在独立时段验证。
+另外用相同八个窗口补测了 **2/4/6 h 动力学拟合**，见 [短拟合对比](RESULTS_SHORT_FIT.md)。
 
 ## 1. 先看懂三个步骤
 
@@ -91,6 +92,15 @@ python benchmark_timesfm.py --device gpu
 测速应依次执行，并等动力学或其他重任务结束。每种输入长度先作计算预热，再测三轮，报告中位数；这与轨道的 20 min 预热不是同一件事。
 已有模型时加 `--checkpoint 模型目录`。窗口成绩写入 `outputs/window-sweep-timesfm-cpu/` 或对应 GPU 目录。
 运行全部组合后可用 `python plot_windows.py` 绘图；CPU 结果加 `--folder outputs/window-sweep-timesfm-cpu`。
+
+补测更短的拟合弧：
+
+```bash
+python window_sweep.py --device gpu --fit-hours 2 4 6 --output outputs/short-fit-gpu
+python plot_windows.py --folder outputs/short-fit-gpu
+```
+
+每条拟合弧自动采用不超过其长度的 TimesFM 输入。CPU 用 `--device cpu`，可指定不同的输出目录。
 
 旧的含 20 min 轨道预热实验保留，便于对照：
 

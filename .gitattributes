@@ -12,3 +12,4 @@ data/forces/* -text -whitespace
 reference/precise/source/* -text -whitespace
 reference/2019-short/source/* -text -whitespace
 reference/window-sweep/source/* -text -whitespace
+reference/short-fit/source/* -text -whitespace

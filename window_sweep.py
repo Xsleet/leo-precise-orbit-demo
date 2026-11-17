@@ -3,13 +3,15 @@ import argparse
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import importlib.metadata
 import json
+from pathlib import Path
 import platform
 import sys
 import time
 import numpy as np
 from main import ROOT, MODEL_ID, REVISION, load_evaluator
 from short_2019 import DATA_PATH
-from no_warmup import FIT_HOURS, CONTEXT_HOURS, history, future_reference, prepare, correct, prefit, save_arc, fingerprint
+from no_warmup import DEFAULT_FIT_HOURS, FIT_HOURS, CONTEXT_HOURS
+from no_warmup import history, future_reference, prepare, correct, prefit, save_arc, fingerprint
 from plotting import write_csv
 from compare_windows import summarize
 
@@ -19,11 +21,12 @@ def run():
     parser.add_argument('--device',choices=['cpu','gpu'],default='cpu')
     parser.add_argument('--model',choices=['physics','timesfm'],default='timesfm')
     parser.add_argument('--checkpoint',default=MODEL_ID)
-    parser.add_argument('--fit-hours',type=int,nargs='+',choices=FIT_HOURS,default=list(FIT_HOURS))
+    parser.add_argument('--fit-hours',type=int,nargs='+',choices=FIT_HOURS,default=list(DEFAULT_FIT_HOURS))
     parser.add_argument('--context-hours',type=int,nargs='+',choices=CONTEXT_HOURS,default=list(CONTEXT_HOURS))
-    parser.add_argument('--workers',type=int,choices=range(1,9),default=1)
+    parser.add_argument('--workers',type=int,choices=range(1,17),default=1)
     parser.add_argument('--threads',type=int,default=4,help='TimesFM 使用的 CPU 线程数')
     parser.add_argument('--refit',action='store_true')
+    parser.add_argument('--output',type=Path,help='自定义输出目录')
     args = parser.parse_args()
     args.fit_hours = sorted(set(args.fit_hours))
     args.context_hours = sorted(set(args.context_hours))
@@ -31,7 +34,13 @@ def run():
         parser.error('动力学使用 CPU；GPU 用于 TimesFM')
     if args.threads < 1:
         parser.error('线程数必须为正')
-    folder = ROOT/'outputs'/f'window-sweep-{args.model}-{args.device}'
+    contexts_by_fit = {
+        hours: [context for context in args.context_hours if context <= hours]
+        for hours in args.fit_hours
+    }
+    if args.model == 'timesfm' and not all(contexts_by_fit.values()):
+        parser.error('每个拟合长度至少需要一种不超过它的 TimesFM 输入长度')
+    folder = args.output or ROOT/'outputs'/f'window-sweep-{args.model}-{args.device}'
     folder.mkdir(parents=True,exist_ok=True)
     started = time.perf_counter()
     timings = []
@@ -60,7 +69,7 @@ def run():
             save_arc(folder/f'fit-{hours:02d}h-window-{number:02d}',arc)
             forecasts = {0:arc['baseline']}
             if evaluator is not None:
-                for context in args.context_hours:
+                for context in contexts_by_fit[hours]:
                     forecasts[context]=correct(arc,evaluator,context)
             # 所有预测已完成，才读取未来参考并评分。
             reference = future_reference(data,number)
@@ -91,6 +100,7 @@ def run():
     sources=['window_sweep.py','no_warmup.py','main.py','short_2019.py','precise.py','dynamics_cache.py',
              'rdop.py','orbit.py','gravity.py','compare_windows.py','plotting.py']
     metadata=dict(device=args.device,model=args.model,fit_hours=args.fit_hours,context_hours=args.context_hours,
+        contexts_by_fit=contexts_by_fit if evaluator is not None else {},
         warmup_minutes=0,horizon_minutes=60,windows=8,fit_step_seconds=10,model_step_seconds=60,
         selection='Fixed 2019-01-02 00:00 through 07:00 GPS; all eight windows retained',
         source_sha256=fingerprint(sources),data_sha256=fingerprint(['data/orbit-2019.csv']),
