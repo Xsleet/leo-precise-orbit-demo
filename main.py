@@ -45,19 +45,29 @@ def forecast_error(errors, evaluator):
     return result
 
 
-def predict(history, evaluator=None, gravity="precise", refit=False):
+def predict(history, evaluator=None, gravity="precise", refit=False, fit_history=None, context_points=CONTEXT):
     """只接收历史。未来参考值不进入拟合、坐标系、线性外推或 TimesFM。"""
     if history.shape != (HISTORY, 7) or not np.isfinite(history).all():
         raise ValueError(f"仅接受 {HISTORY} 个历史位置速度点，不接收未来参考")
     if not np.all(np.diff(history[:, 0]) == STEP):
         raise ValueError("历史采样间隔必须为 60 秒")
+    if not WARMUP <= context_points <= HISTORY:
+        raise ValueError("模型上下文必须位于已知历史内，且覆盖预热段")
+    dense = history if fit_history is None else fit_history
+    if (dense.ndim != 2 or dense.shape[1] != 7 or not np.isfinite(dense).all()
+            or dense[0, 0] != history[0, 0] or dense[-1, 0] != history[-1, 0]
+            or not np.all(np.diff(dense[:, 0]) == (10 if fit_history is not None else STEP))):
+        raise ValueError("拟合输入必须覆盖相同历史，不能含未来数据或缺测")
+    if fit_history is not None:
+        if gravity != "precise" or not np.array_equal(dense[::6], history):
+            raise ValueError("10 秒拟合仅用于精密动力学，分钟记录必须与历史一致")
     # 1. 只拟合至 -20 min；之后连续积分，起报点 0 min 不重置状态。
     if gravity == "precise":
         from dynamics_cache import fit_cached
         fit_arc = lambda past, count: fit_cached(past, count, recompute=refit)
     else:
         fit_arc = lambda past, count: fit_and_predict(past, count, gravity == "egm2008")
-    trajectory, fit = fit_arc(history[:FIT + 1], WARMUP + HORIZON)
+    trajectory, fit = fit_arc(dense[dense[:, 0] <= history[-1, 0] - WARMUP * STEP], WARMUP + HORIZON)
     basis = frames(trajectory)
     past_error = to_swr(history[:, 1:4] - trajectory[:HISTORY, :3], basis[:HISTORY])
     result = {"rdop": trajectory[HISTORY:, :3]}
@@ -67,13 +77,13 @@ def predict(history, evaluator=None, gravity="precise", refit=False):
     result["rdop_linear"] = result["rdop"] + to_xyz(linear_error, basis[HISTORY:])
     # 3. TimesFM 看到拟合残差 + 预热预报误差，修正同一条动力学轨道。
     if evaluator is not None:
-        correction = forecast_error(past_error[-CONTEXT:], evaluator)
+        correction = forecast_error(past_error[-context_points:], evaluator)
         result["rdop_timesfm"] = result["rdop"] + to_xyz(correction, basis[HISTORY:])
     # 更强的动力学对照：利用截至 0 min 的最新 8 h 数据重新拟合。
-    fresh, fresh_fit = fit_arc(history[-(FIT + 1):], HORIZON)
+    fresh, fresh_fit = fit_arc(dense[dense[:, 0] >= history[-1, 0] - FIT * STEP], HORIZON)
     result["fresh_rdop"] = fresh[-HORIZON:, :3]
     details = {"trajectory": trajectory, "basis": basis, "past_error_swr": past_error,
-               "fit": fit, "fresh_fit": fresh_fit}
+               "fit": fit, "fresh_fit": fresh_fit, "context_points": context_points}
     return result, details
 
 

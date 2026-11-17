@@ -1,0 +1,12 @@
+{
+  "window": 3,
+  "cache": "493087c85db011973996449552809c9c5ffc51973c3b8934dbea9f6c60e53fe0.npz",
+  "max_difference_m": 0.0019282607160904745,
+  "max_forecast_difference_m": 0.0019282607160904745,
+  "endpoint_difference_m": 0.0019282607160904745,
+  "elapsed_seconds": 55.798805200029165,
+  "nominal_max_step_seconds": 60,
+  "tight_max_step_seconds": 30,
+  "nominal_position_tolerance_m": 1e-07,
+  "tight_position_tolerance_m": 1e-08
+}

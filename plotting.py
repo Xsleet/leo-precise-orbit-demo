@@ -22,7 +22,7 @@ def write_csv(path, records):
         writer.writerows(records)
 
 
-def save_result(sample, predictions, details, number, output, device):
+def save_result(sample, predictions, details, number, output, device, data_path=None):
     output.mkdir(parents=True, exist_ok=True)
     reference = sample[HISTORY:, 1:4]
     errors = {name: np.linalg.norm(values - reference, axis=1) for name, values in predictions.items()}
@@ -38,20 +38,21 @@ def save_result(sample, predictions, details, number, output, device):
     past_base = details["trajectory"][:HISTORY, :3]
     residual = details["past_error_swr"]
     minutes = np.arange(1 - HISTORY, 1)
+    context_points = details.get("context_points", CONTEXT)
     columns = np.column_stack([sample[:HISTORY, 0], sample[:HISTORY, 1:4], past_base, residual,
-                               minutes > -WARMUP, minutes > -CONTEXT])
+                               minutes > -WARMUP, minutes > -context_points])
     header = ["gps_seconds"] + [f"{kind}_{axis}_m" for kind in ("reference", "baseline") for axis in "xyz"]
     header += [f"residual_{axis}_m" for axis in "swr"] + ["is_warmup", "is_timesfm_input"]
     np.savetxt(output / "history.csv", columns, delimiter=",", header=",".join(header), comments="", fmt="%.17g")
     write_csv(output / "metrics.csv", metrics)
     metadata = {"window": number, "origin": time_label(sample[HISTORY - 1, 0]), "device": device,
         "reference": "GRACE-FO C GNV1B RL04", "frame": "ECEF, residual in SWR",
-        "fit_minutes": FIT, "warmup_minutes": WARMUP, "context_points": CONTEXT,
+        "fit_minutes": FIT, "warmup_minutes": WARMUP, "context_points": context_points,
         "horizon_minutes": HORIZON, "timesfm_revision": REVISION, "fine_tuned": False,
         "residual_sign": "reference - dynamics; correction added to same dynamics arc",
         "dynamics": details["fit"].get("model", details["fit"]["gravity"] + " + 5 empirical accelerations"),
         "fit": details["fit"], "fresh_fit": details["fresh_fit"],
-        "data_sha256": hashlib.sha256((ROOT / "data/orbit.csv").read_bytes()).hexdigest()}
+        "data_sha256": hashlib.sha256((data_path or ROOT / "data/orbit.csv").read_bytes()).hexdigest()}
     (output / "run.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
 
     future = np.arange(1, HORIZON + 1)
@@ -59,7 +60,8 @@ def save_result(sample, predictions, details, number, output, device):
     true_error = to_swr(reference - predictions["rdop"], future_basis)
     fig, axes = plt.subplots(4, 1, figsize=(11, 10), gridspec_kw={"height_ratios": [1, 1, 1, 1.2]})
     for j, (ax, label) in enumerate(zip(axes[:3], ["Along-track S", "Cross-track W", "Radial R"])):
-        ax.plot(minutes[-CONTEXT:], residual[-CONTEXT:, j], color="#44536b", lw=1.2, label="Past error")
+        ax.plot(minutes[-CONTEXT:], residual[-CONTEXT:, j], color="#44536b", lw=1.2,
+                label=f"Past error (last {context_points} min are model input)")
         ax.axvspan(-WARMUP, 0, color="#92c8de", alpha=.25, label="20-min warm-up")
         ax.axvspan(0, HORIZON, color="#f5d0a2", alpha=.25)
         ax.axvline(-WARMUP, color="#6b9bac", linestyle=":", lw=1)

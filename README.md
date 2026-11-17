@@ -4,10 +4,16 @@
 参考 Li 等（2025）：**过去 8 小时拟合 → 20 分钟预热 → 未来 60 分钟预报**。
 
 当前动力学已升级为 Orekit：150 阶 EGM2008、DE405 日月引力、潮汐、物理阻力、太阳辐射压和精密坐标变换。
-TimesFM 使用原始 3.0 权重，没有微调。CPU/GPU 实测成绩及与论文的对照见 [RESULTS.md](RESULTS.md)。
+TimesFM 使用原始 3.0 权重，没有微调。
 
-**八个窗口第 60 分钟三维 RMSE：动力学 1.144 m → 加 TimesFM 后 0.761 m。**
-动力学基线较旧版的 6.958 m 改善，但整体仍未达到分米级目标。
+**当前入口是 2019 短期实验：** 1 月 2 日 00–07 时，每小时起报，共八个窗口；
+动力学按 10 s 采样拟合，TimesFM 输入 80 min 误差。成绩见 [RESULTS_2019.md](RESULTS_2019.md)。
+这是固定短期窗口验证，不代表复现论文全年结果。
+
+**第 60 min 三维 RMSE：最新重拟合动力学 16.8 cm；含预热的同一弧段 39.7 cm → 加 TimesFM 后 28.5 cm。**
+这次基线达到分米级，但 TimesFM 没有优于最新历史重拟合。
+
+旧 2025 实验保留在 [RESULTS.md](RESULTS.md)：第 60 分钟三维 RMSE 为动力学 1.144 m → 加 TimesFM 后 0.761 m。
 
 ## 1. 先看懂三个步骤
 
@@ -15,7 +21,8 @@ TimesFM 使用原始 3.0 权重，没有微调。CPU/GPU 实测成绩及与论�
 2. 保留起报前 20 分钟，看这条动力学预报最近错了多少。
 3. **最终预报 = 动力学未来位置 + TimesFM 预测的未来误差**。
 
-TimesFM 输入最近 6 小时的沿轨/法向/径向误差。未来参考轨道只用于最后评分。
+2019 实验的 TimesFM 输入为最近 1 h 拟合残差 + 20 min 预热误差，三方向分别预测。
+未来参考轨道只用于最后评分。图中仍展示过去 6 小时，便于理解误差变化。
 先读 [基础知识](BASICS.md)，再读 [main.py](main.py) 的 `predict()`；底层力模型在 [precise.py](precise.py)。
 与论文的逐项配置差异见 [DYNAMICS.md](DYNAMICS.md)：大气模型采用 DTM2000 替代 DTM94，仍有名义姿态等简化。
 
@@ -37,7 +44,7 @@ PowerShell 可把下文 `python` 换成 `.\.venv\Scripts\python.exe`。
 ```bash
 python -m pip install torch==2.8.0 --index-url https://download.pytorch.org/whl/cpu
 python -m pip install -r requirements-timesfm.txt
-python main.py --device cpu
+python short_2019.py --device cpu
 ```
 
 **GPU：NVIDIA 显卡，驱动支持 CUDA 12.8。**
@@ -45,7 +52,7 @@ python main.py --device cpu
 ```bash
 python -m pip install torch==2.8.0 --index-url https://download.pytorch.org/whl/cu128
 python -m pip install -r requirements-timesfm.txt
-python main.py --device gpu
+python short_2019.py --device gpu
 ```
 
 macOS 的 PyTorch 安装命令改为 `python -m pip install torch==2.8.0`，运行时选 `cpu`。
@@ -58,12 +65,12 @@ macOS 的 PyTorch 安装命令改为 `python -m pip install torch==2.8.0`，运�
 
 ```bash
 python -m pip install -r requirements.txt
-python main.py --model physics
+python short_2019.py --model physics
 ```
 
 ## 3. 看懂结果
 
-![过去6小时误差、预热、未来60分钟](data/example.png)
+![过去6小时误差、预热、未来60分钟](data/example-2019.png)
 
 前三行是沿轨、法向、径向误差：**过去 6 小时 → 蓝色预热区 → 起报虚线 → 未来 60 分钟**。
 黑色点线是事后参考误差；最下面是各方法的三维位置误差。
@@ -71,10 +78,21 @@ python main.py --model physics
 保留四个对照：动力学、动力学＋线性误差、动力学＋TimesFM、利用截至起报时最新历史重新拟合的动力学。
 后一个对照可以检查：加入 TimesFM 的收益是否超过及时更新动力学本身。
 
-全部八个窗口的整段 RMS、60 min RMSE、逐窗口结果以及论文对照见 **[RESULTS.md](RESULTS.md)**。
+全部八个窗口的整段 RMS、60 min RMSE、逐窗口结果以及论文对照见 **[RESULTS_2019.md](RESULTS_2019.md)**。
 “60 min RMSE”指八个窗口在第 60 分钟的误差均方根，与论文 Table 5 的统计口径对应；不同年份、力模型细节和训练规模仍使两者不能视为同场竞赛。
 
 ## 4. 自己分析
+
+```bash
+python short_2019.py --device cpu --context 360
+python short_2019.py --model physics --refit --workers 4
+```
+
+上面第一条把模型历史恢复为旧版的 6 h，可自行观察输入长度的影响；第二条从头拟合。
+八个窗口固定为 2019 年 1 月 2 日 00–07 时 GPS，没有按误差挑选。
+已有模型时加 `--checkpoint 模型目录`。结果写入 `outputs/2019-short-timesfm-cpu-ctx80/` 或对应 GPU 目录。
+
+旧 2025 实验入口保留：
 
 ```bash
 python main.py --device cpu --window 3
@@ -83,10 +101,10 @@ python compare_windows.py --device gpu
 python main.py --model physics --refit
 ```
 
-八个固定窗口为 2025 年 6 月 2–3 日每天 00、06、12、18 时（GPS），全部保留。
+旧实验八个固定窗口为 2025 年 6 月 2–3 日每天 00、06、12、18 时（GPS），全部保留。
 已有模型时加 `--checkpoint 模型目录`。旧的简化动力学可用 `--gravity egm2008` 或 `--gravity j2` 重跑。
 
-结果在 `outputs/li2025-precise-timesfm-cpu/` 或对应 GPU 目录：
+两种实验的输出文件结构相同：
 
 | 文件 | 用途 |
 |---|---|
@@ -97,7 +115,7 @@ python main.py --model physics --refit
 | summary.csv / by_window.csv | 整体与逐窗口成绩 |
 | by_lead.csv / paper_comparison.csv | 不同预报时长和论文对照 |
 
-当前归档在 [reference/precise](reference/precise/README.md)，旧实验保存在 [reference/li2025](reference/li2025/README.md)。
+当前归档在 [reference/2019-short](reference/2019-short/README.md)，2025 精密动力学实验在 [reference/precise](reference/precise/README.md)，更早的简化动力学实验在 [reference/li2025](reference/li2025/README.md)。
 运行 `python -m unittest discover -v` 检查力模型数据、时标、潮汐相位、历史边界与归档结果。
 
 给学生的三个问题：为什么要预热？动力学更精确后 TimesFM 还能改善多少？为什么换年份和空间天气条件会影响结果？

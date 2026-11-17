@@ -3,6 +3,7 @@
 本科生先看 main.py；这里隔离坐标变换、力模型和 Java 接口。配置差异见 DYNAMICS.md。
 """
 import os
+from datetime import date as CalendarDate, timedelta
 from functools import lru_cache
 from pathlib import Path
 import numpy as np
@@ -50,23 +51,43 @@ class PastWeather:
     def __init__(self, cutoff):
         from org.orekit.time import AbsoluteDate
         e = engine()
-        self.start = AbsoluteDate(2025, 3, 1, e['utc'])
+        day = CalendarDate.fromisoformat(str(cutoff.getComponents(e['utc']).getDate()))
+        self.first_day = day - timedelta(days=90)
+        self.start = AbsoluteDate(self.first_day.year, self.first_day.month, self.first_day.day, e['utc'])
         self.cutoff = cutoff.durationFrom(self.start)
-        rows = [line.split() for line in (DATA / 'SpaceWeather-All-v1.2.txt').read_text().splitlines()
-                if line.startswith('2025 ') and 3 <= int(line[5:7]) <= 6]
+        self.cutoff_date = cutoff
+        rows = []
+        for line in (DATA / 'SpaceWeather-All-v1.2.txt').read_text().splitlines():
+            if len(line) < 11 or not line[:4].isdigit():
+                continue
+            row = line.split()
+            stamp = CalendarDate(*map(int, row[:3]))
+            if self.first_day <= stamp <= day + timedelta(days=1):
+                rows.append(row)
+        dates = [CalendarDate(*map(int, row[:3])) for row in rows]
+        expected = [self.first_day + timedelta(days=k) for k in range(91)]
+        if dates[:91] != expected:
+            raise ValueError('空间天气未覆盖拟合日期，或日期不连续')
         # CSSI: Kp 列 5:13 以 Kp*10 存储；末三列为 observed F10.7, centered81, trailing81。
         self.flux = np.array([float(r[-3]) for r in rows])
         self.mean = np.array([float(r[-1]) for r in rows])
         self.kp = np.array([[float(v) / 10 for v in r[5:13]] for r in rows]).ravel()
 
     def elapsed(self, date):
-        return min(date.durationFrom(self.start), self.cutoff)
+        # 按 UTC 日期索引，跨闰秒时也不能错用前后相邻的 3 h 天气段。
+        date = date if date.compareTo(self.cutoff_date) <= 0 else self.cutoff_date
+        parts = date.getComponents(engine()['utc'])
+        day = CalendarDate.fromisoformat(str(parts.getDate()))
+        seconds = (day - self.first_day).days * 86400 + parts.getTime().getSecondsInLocalDay()
+        if seconds < 86400:
+            raise ValueError('空间天气不覆盖所需历史')
+        return seconds
 
     def getMinDate(self):
         return self.start.shiftedBy(86400.)
 
     def getMaxDate(self):
-        return self.start.shiftedBy(120 * 86400.)
+        return self.cutoff_date.shiftedBy(31 * 86400.)
 
     def getInstantFlux(self, date):
         return float(self.flux[int(self.elapsed(date) // 86400) - 1])
@@ -184,10 +205,15 @@ class Arc:
         for force in self.forces:
             propagator.addForceModel(force)
         # 空间天气每 3 h 更新；必须在跳变处断步，不能让积分器跨过去。
-        weather_start = self.weather.start
-        first = np.floor(self.start.durationFrom(weather_start) / 10800) + 1
-        last = np.floor(self.end.durationFrom(weather_start) / 10800)
-        boundaries = [weather_start.shiftedBy(float(k * 10800)) for k in np.arange(first, last + 1)]
+        start_day = CalendarDate.fromisoformat(str(self.start.getComponents(self.e['utc']).getDate()))
+        end_day = CalendarDate.fromisoformat(str(self.end.getComponents(self.e['utc']).getDate()))
+        boundaries = []
+        for offset in range((end_day - start_day).days + 1):
+            day = start_day + timedelta(days=offset)
+            for hour in range(0, 24, 3):
+                date = AbsoluteDate(day.year, day.month, day.day, hour, 0, 0., self.e['utc'])
+                if self.start.compareTo(date) < 0 and date.compareTo(self.end) <= 0:
+                    boundaries.append(date)
         if boundaries:
             detector = DateDetector(jpype.JArray(AbsoluteDate)(boundaries))
             propagator.addEventDetector(detector.withThreshold(1e-9).withHandler(ResetDerivativesOnEvent()))
@@ -223,6 +249,11 @@ def fit_and_predict(observed, future_points):
     print('  Orekit：拟合 8 h 历史（CPU），首次运行需要数分钟……', flush=True)
     arc = Arc(observed)
     times = observed[:, 0] - observed[0, 0]
+    spacing = np.diff(times)
+    if not len(spacing) or not np.all(spacing == spacing[0]) or spacing[0] not in (10, 60):
+        raise ValueError('动力学观测需为完整的 10 秒或 60 秒等间隔序列')
+    if times[-1] % 60:
+        raise ValueError('拟合弧必须覆盖完整分钟')
 
     def residual(p):
         return (arc.propagate(p, times)[:, :3] - arc.reference).ravel()
@@ -244,10 +275,12 @@ def fit_and_predict(observed, future_points):
         p0 = fit.x
     if not fit.success:
         raise ValueError('历史拟合未收敛：' + fit.message)
-    trajectory = arc.propagate(fit.x, np.arange(len(observed) + future_points) * 60., earth_fixed=True)
+    # 拟合可用 10 s 采样，输出仍为 60 s，方便学生查看和 TimesFM 输入。
+    trajectory = arc.propagate(fit.x, np.arange(int(times[-1] / 60) + 1 + future_points) * 60., earth_fixed=True)
     info = dict(gravity='EGM2008 150x150 / Orekit',
         fit_start_gps_seconds=float(observed[0, 0]), fit_end_gps_seconds=float(observed[-1, 0]),
-        fit_points=len(observed), fit_rms_3d_m=float(np.sqrt(np.mean(fit.fun.reshape(-1, 3)**2) * 3)),
+        fit_points=len(observed), observation_step_seconds=float(spacing[0]),
+        fit_rms_3d_m=float(np.sqrt(np.mean(fit.fun.reshape(-1, 3)**2) * 3)),
         empirical_m_s2=(fit.x[6:10] * arc.scale[6:10]).tolist(),
         drag_factors=(1 + fit.x[10:] * arc.scale[10:]).tolist(),
         drag_segment_start_gps_seconds=[d.durationFrom(arc.e['epoch']) for d in arc.drag_dates],

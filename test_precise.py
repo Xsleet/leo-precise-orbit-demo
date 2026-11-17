@@ -105,7 +105,7 @@ class PreciseTests(unittest.TestCase):
 
 
 class PreciseArchiveTests(unittest.TestCase):
-    def test_all_windows_reuse_matching_cache_and_scores_recompute(self):
+    def test_2025_archive_cache_and_scores_recompute(self):
         import csv
         from unittest.mock import patch
         from main import predict, HISTORY
@@ -128,12 +128,15 @@ class PreciseArchiveTests(unittest.TestCase):
                     np.testing.assert_allclose(error,pred[f'{name}_error_3d_m'],atol=1e-8,rtol=0)
                     errors.setdefault(name,[]).append(error)
                 if device == 'cpu':
-                    with patch('dynamics_cache.fit_and_predict',side_effect=AssertionError('附带动力学缓存失效')):
-                        result, details = predict(sample[:HISTORY])
-                    for name in result:
-                        np.testing.assert_allclose(result[name],np.column_stack([pred[f'{name}_{c}_m'] for c in 'xyz']),atol=2e-8,rtol=0)
+                    # 2025 归档对应其 source/ 下的旧源码；新版源码应使旧缓存失效。
+                    # 此处核验归档自己的轨道和数值，而不是要求新版接受旧源码缓存。
                     for key in ['fit','fresh_fit']:
-                        self.assertTrue((ROOT/'reference/precise/dynamics-cache'/f"{details[key]['cache_key']}.npz").exists())
+                        path = ROOT/'reference/precise/dynamics-cache'/f"{run[key]['cache_key']}.npz"
+                        with np.load(path, allow_pickle=False) as cache:
+                            self.assertEqual(json.loads(str(cache['info']))['cache_key'], run[key]['cache_key'])
+                            name = 'rdop' if key == 'fit' else 'fresh_rdop'
+                            expected = np.column_stack([pred[f'{name}_{c}_m'] for c in 'xyz'])
+                            np.testing.assert_allclose(cache['trajectory'][-60:,:3], expected, atol=2e-8, rtol=0)
             summaries,_ = summarize(errors)
             with (folder/'summary.csv').open(encoding='utf8') as stream:
                 actual = {r['model']: r for r in csv.DictReader(stream)}

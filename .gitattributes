@@ -10,3 +10,4 @@ data/EGM2008_120.gfc -whitespace
 
 data/forces/* -text -whitespace
 reference/precise/source/* -text -whitespace
+reference/2019-short/source/* -text -whitespace

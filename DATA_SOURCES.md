@@ -2,6 +2,19 @@
 
 ## 参考数据
 
+**新增 2019 短期实验：** [data/orbit-2019.csv](data/orbit-2019.csv) 保存 2019 年 1 月 1–2 日的 C 星轨道，
+以 10 s 采样，共 17,280 条质量标志为零的记录。下载自 GFZ 的 JPL RL04 官方镜像，
+下载地址、压缩包及原始 GNV1B 哈希见 [data/orbit-2019.sources.json](data/orbit-2019.sources.json)，
+抽取规则和 CSV 哈希见 [data/orbit-2019.manifest.json](data/orbit-2019.manifest.json)。
+论文说明使用 GNV1B，但没有明确给出 release 编号；不能确认其原始文件与本例 RL04 完全相同。
+仅使用整 10 秒历元，不插值。拟合采用 10 s，TimesFM 和评分采用 60 s。
+
+起报点预先固定为 2019-01-02 00:00 至 07:00 GPS，每小时一次；全部八个窗口保留。
+TimesFM 默认输入最近 80 min 误差（60 min 拟合残差 + 20 min 预热），图中仍展示过去 6 h。
+每个窗口的动力学拟合为 2,881 个点，未来 60 个分钟点只在预测完成后评分。
+
+以下是保留的 **2025 旧实验** 数据说明。
+
 使用 NASA/JPL **GRACE-FO Level-1B RL04** 的 **GNV1B** C 星产品。产品 DOI：[10.5067/GFJPL-L1B04](https://doi.org/10.5067/GFJPL-L1B04)；
 [PO.DAAC 集合入口](https://podaac.jpl.nasa.gov/dataset/GRACEFO_L1B_ASCII_GRAV_JPL_RL04)。
 

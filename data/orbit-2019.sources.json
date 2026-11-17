@@ -1,0 +1,14 @@
+[
+  {
+    "url": "https://isdc-data.gfz.de/grace-fo/Level-1B/JPL/INSTRUMENT/RL04/2019/gracefo_1B_2019-01-01_RL04.ascii.noLRI.tgz",
+    "archive_sha256": "ccad06d1129f3f703bd55e1e31d1a2082b8ca5e06801012aa76c7c0a6896542b",
+    "file": "GNV1B_2019-01-01_C_04.txt",
+    "sha256": "6816ff54aec18e77343cc0487c2a03efaa6d4e75c02fdb3b58aef158ba0cc4a2"
+  },
+  {
+    "url": "https://isdc-data.gfz.de/grace-fo/Level-1B/JPL/INSTRUMENT/RL04/2019/gracefo_1B_2019-01-02_RL04.ascii.noLRI.tgz",
+    "archive_sha256": "ebb6ec83735cda1cc038decbe4fe9f240daaeb501282cde925b6f23c9da0ae79",
+    "file": "GNV1B_2019-01-02_C_04.txt",
+    "sha256": "100c00170dedc2d6b141c95c8c5eb5eb353ff8b001e536d87b66fef620747a66"
+  }
+]

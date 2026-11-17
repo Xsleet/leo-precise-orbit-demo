@@ -22,12 +22,14 @@ def fit_cached(observed, future_points, recompute=False):
         digest.update((name + importlib.metadata.version(name)).encode())
     path = root / 'outputs/dynamics-cache' / (digest.hexdigest() + '.npz')
     supplied = root / 'reference/precise/dynamics-cache' / path.name
-    for candidate in [path, supplied]:
+    short = root / 'reference/2019-short/dynamics-cache' / path.name
+    output_points = int((observed[-1, 0] - observed[0, 0]) / 60) + 1 + future_points
+    for candidate in [path, supplied, short]:
         if candidate.exists() and not recompute:
             with np.load(candidate, allow_pickle=False) as cached:
                 info = json.loads(str(cached['info']))
                 trajectory = cached['trajectory']
-                if info['cache_key'] != digest.hexdigest() or trajectory.shape != (len(observed) + future_points, 6):
+                if info['cache_key'] != digest.hexdigest() or trajectory.shape != (output_points, 6):
                     raise ValueError('动力学缓存与当前实验不匹配')
                 if not np.isfinite(trajectory).all():
                     raise ValueError('动力学缓存包含无效值')
