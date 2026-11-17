@@ -23,8 +23,9 @@ def fit_cached(observed, future_points, recompute=False):
     path = root / 'outputs/dynamics-cache' / (digest.hexdigest() + '.npz')
     supplied = root / 'reference/precise/dynamics-cache' / path.name
     short = root / 'reference/2019-short/dynamics-cache' / path.name
+    sweep = root / 'reference/window-sweep/dynamics-cache' / path.name
     output_points = int((observed[-1, 0] - observed[0, 0]) / 60) + 1 + future_points
-    for candidate in [path, supplied, short]:
+    for candidate in [path, supplied, short, sweep]:
         if candidate.exists() and not recompute:
             with np.load(candidate, allow_pickle=False) as cached:
                 info = json.loads(str(cached['info']))

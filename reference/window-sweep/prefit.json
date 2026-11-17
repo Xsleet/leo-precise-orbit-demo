@@ -1,0 +1,194 @@
+[
+  {
+    "window": 8,
+    "fit_hours": 24,
+    "seconds": 1600.1031068000011,
+    "fit_rms_3d_m": 0.08522634423719239,
+    "cache_key": "6b724ef56546fb74a60f0ad079785bc0cb8c4dbd59171aeabf9382cc507e17e1",
+    "reused_cache": false
+  },
+  {
+    "window": 3,
+    "fit_hours": 24,
+    "seconds": 1683.549257799983,
+    "fit_rms_3d_m": 0.07608225285146294,
+    "cache_key": "7eb38b35abe14cb2ae6f64b91413b64593cab533d5c1bd67f08df51346f1ce93",
+    "reused_cache": false
+  },
+  {
+    "window": 5,
+    "fit_hours": 24,
+    "seconds": 1718.3299547999632,
+    "fit_rms_3d_m": 0.07577746212173204,
+    "cache_key": "3f6c3711539d4117728cb22710a775da56ac601089ad10ac9176b3e9bd1b5afc",
+    "reused_cache": false
+  },
+  {
+    "window": 4,
+    "fit_hours": 24,
+    "seconds": 1747.9947790000588,
+    "fit_rms_3d_m": 0.0781675609082946,
+    "cache_key": "59f3090460384e22be0160378962f4211bea13302d75657db7f7b8664405121a",
+    "reused_cache": false
+  },
+  {
+    "window": 1,
+    "fit_hours": 24,
+    "seconds": 1749.3258680000436,
+    "fit_rms_3d_m": 0.07875065094498186,
+    "cache_key": "7f21c29decc84b45075911c1142bb47eca1df04a0f9ed70fa68e4d575c9e0f12",
+    "reused_cache": false
+  },
+  {
+    "window": 6,
+    "fit_hours": 24,
+    "seconds": 1767.8402364000212,
+    "fit_rms_3d_m": 0.08023588156118966,
+    "cache_key": "0076071e943ce3dfebbc965692b9fdbef4d6cc151a05f7668c7b54d8de05591b",
+    "reused_cache": false
+  },
+  {
+    "window": 7,
+    "fit_hours": 24,
+    "seconds": 1805.4264217999298,
+    "fit_rms_3d_m": 0.08437520327867222,
+    "cache_key": "52d20608f160c57b8de344bb4fe292779973aeb8c9bcd36263de4e56aee0f770",
+    "reused_cache": false
+  },
+  {
+    "window": 2,
+    "fit_hours": 24,
+    "seconds": 1855.2052447000751,
+    "fit_rms_3d_m": 0.07582493318655707,
+    "cache_key": "1a68c71c353d9dba110ec02ab5018406a0c5b54b3511991e067d5577898cd679",
+    "reused_cache": false
+  },
+  {
+    "window": 1,
+    "fit_hours": 12,
+    "seconds": 702.3317598999711,
+    "fit_rms_3d_m": 0.05650380534867986,
+    "cache_key": "14036b45d6fa4f72f5a8657fee40ca1e02afbf4cc79e65baead815026461ac9b",
+    "reused_cache": false
+  },
+  {
+    "window": 1,
+    "fit_hours": 8,
+    "seconds": 0.05919770000036806,
+    "fit_rms_3d_m": 0.0335843309041999,
+    "cache_key": "19760126da543160284c7ce3cf8499c93840effe54330fbdd0fb38dd35dd92e3",
+    "reused_cache": true
+  },
+  {
+    "window": 2,
+    "fit_hours": 8,
+    "seconds": 0.059367200010456145,
+    "fit_rms_3d_m": 0.032772987438254325,
+    "cache_key": "35c72f04e4e74ca4570b05401af8d28352f0900b266a43258ff32af3daf1a7e8",
+    "reused_cache": true
+  },
+  {
+    "window": 3,
+    "fit_hours": 8,
+    "seconds": 0.058632300002500415,
+    "fit_rms_3d_m": 0.04637756056529846,
+    "cache_key": "6d7b715f0ec82b5d94755c3b40c21669fb0bdf111c7cb48bfaf0e76c112018bf",
+    "reused_cache": true
+  },
+  {
+    "window": 4,
+    "fit_hours": 8,
+    "seconds": 0.06326319999061525,
+    "fit_rms_3d_m": 0.05797428811518942,
+    "cache_key": "903526f32c8d034adaa3cb1ab5a4ebd8019a328d3a79bbbea6acc2fec396fc57",
+    "reused_cache": true
+  },
+  {
+    "window": 5,
+    "fit_hours": 8,
+    "seconds": 0.05667429999448359,
+    "fit_rms_3d_m": 0.03773394529307115,
+    "cache_key": "3c6c1e062c3e773133c9be0449b107bb83184fb741cda8fa74f58608d86ac4ab",
+    "reused_cache": true
+  },
+  {
+    "window": 6,
+    "fit_hours": 8,
+    "seconds": 0.06162559997756034,
+    "fit_rms_3d_m": 0.03415857584796573,
+    "cache_key": "b13aa23637271c4c639b6d400e604827a03a0b34bbf6c7f9da73892c74771a12",
+    "reused_cache": true
+  },
+  {
+    "window": 7,
+    "fit_hours": 8,
+    "seconds": 0.057550700032152236,
+    "fit_rms_3d_m": 0.031228536198465044,
+    "cache_key": "16743e7c7ea2201d1671211d4ca075d5821b365546f1ecb634da9a605deea2bb",
+    "reused_cache": true
+  },
+  {
+    "window": 8,
+    "fit_hours": 8,
+    "seconds": 0.06193099997472018,
+    "fit_rms_3d_m": 0.03103154390512323,
+    "cache_key": "d9d73f9c57ecfcd873c26b1495f7eaa76094f736d62154bec0d0fe32755039bf",
+    "reused_cache": true
+  },
+  {
+    "window": 2,
+    "fit_hours": 12,
+    "seconds": 620.64971779997,
+    "fit_rms_3d_m": 0.047843250446889994,
+    "cache_key": "40e34aa70880ce3433ed9ff3dde29a426faa14d417e6a30a8e20fc2bf891e214",
+    "reused_cache": false
+  },
+  {
+    "window": 4,
+    "fit_hours": 12,
+    "seconds": 559.6593494000845,
+    "fit_rms_3d_m": 0.059127004915350494,
+    "cache_key": "371460d609a21d320dd7b1a31551d1891990f1e187bb46eba2077fdf17090e53",
+    "reused_cache": false
+  },
+  {
+    "window": 6,
+    "fit_hours": 12,
+    "seconds": 550.6682885999326,
+    "fit_rms_3d_m": 0.06311625332209399,
+    "cache_key": "84205df03d7307561778f5ed030086586bdf71d358667474b780f567de3b73da",
+    "reused_cache": false
+  },
+  {
+    "window": 3,
+    "fit_hours": 12,
+    "seconds": 649.7585186999058,
+    "fit_rms_3d_m": 0.04666828351191,
+    "cache_key": "35859e824d96eee3bdca71dbba5f7b2b4e90c5824d9833c22bb8b62345346058",
+    "reused_cache": false
+  },
+  {
+    "window": 5,
+    "fit_hours": 12,
+    "seconds": 640.6919087999268,
+    "fit_rms_3d_m": 0.057762886403575964,
+    "cache_key": "4b376452bea5d244f73d209d6472efd4ebba88711fe71c4fc271079ad53d4eb8",
+    "reused_cache": false
+  },
+  {
+    "window": 7,
+    "fit_hours": 12,
+    "seconds": 625.5109194999095,
+    "fit_rms_3d_m": 0.0633211349172259,
+    "cache_key": "f5e6794c3de3b5051b0567accecd856eb4f7c035c8a41b59f0b2065b39280a90",
+    "reused_cache": false
+  },
+  {
+    "window": 8,
+    "fit_hours": 12,
+    "seconds": 697.7747255000286,
+    "fit_rms_3d_m": 0.051407275564058795,
+    "cache_key": "741f6455ac296c942d4015cd960153c585deac8c9382e29e051304688ecd52c8",
+    "reused_cache": false
+  }
+]

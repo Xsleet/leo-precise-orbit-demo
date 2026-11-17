@@ -1,6 +1,7 @@
 # 历史与当前结果
 
-**当前精密力模型结果见 [precise](precise/README.md)。上一轮简化力模型见 [li2025](li2025/README.md)。**
+**当前无预热窗口长度实验与 CPU/GPU 测速见 [window-sweep](window-sweep/README.md)。**
+旧的 2019 含预热实验见 [2019-short](2019-short/README.md)，2025 精密力模型见 [precise](precise/README.md)，简化力模型见 [li2025](li2025/README.md)。
 
 本页其余内容为早期版本的运行记录；其中命令描述的是当时的代码，当前运行方法以仓库首页为准。
 
